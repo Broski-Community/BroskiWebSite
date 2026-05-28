@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MC_VERSIONS, groupMcVersions, formatVersionsCompact } from '../config/mcVersions';
+import { groupMcVersions, formatVersionsCompact } from '../config/mcVersions';
 
 interface McVersionDropdownProps {
   selected: string[];
