@@ -55,11 +55,11 @@ function App() {
 
                   {/* Protected routes — require login + accepted terms */}
                   <Route path="/" element={<Home />} />
-                  <Route path="/tierlist" element={<TierList />} />
+                  <Route path="/tierlist" element={<RequireAuth><RequireAdmin><TierList /></RequireAdmin></RequireAuth>} />
                   <Route path="/social" element={<Social />} />
                   <Route path="/progetti" element={<Projects />} />
                   <Route path="/wiki" element={<Wiki />} />
-                  <Route path="/countdown" element={<Countdown />} />
+                  <Route path="/countdown" element={<RequireAuth><RequireAdmin><Countdown /></RequireAdmin></RequireAuth>} />
                   <Route path="/store" element={<RequireAuth><Store /></RequireAuth>} />
                   <Route path="/contatti" element={<Contacts />} />
                   <Route path="/mods" element={<Mods />} />
