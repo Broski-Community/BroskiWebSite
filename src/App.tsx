@@ -54,15 +54,15 @@ function App() {
                   <Route path="/pp" element={<PrivacyPolicy />} />
 
                   {/* Protected routes — require login + accepted terms */}
-                  <Route path="/" element={<RequireAuth><Home /></RequireAuth>} />
-                  <Route path="/tierlist" element={<RequireAuth><TierList /></RequireAuth>} />
-                  <Route path="/social" element={<RequireAuth><Social /></RequireAuth>} />
-                  <Route path="/progetti" element={<RequireAuth><Projects /></RequireAuth>} />
-                  <Route path="/wiki" element={<RequireAuth><Wiki /></RequireAuth>} />
-                  <Route path="/countdown" element={<RequireAuth><Countdown /></RequireAuth>} />
+                  <Route path="/" element={<Home />} />
+                  <Route path="/tierlist" element={<TierList />} />
+                  <Route path="/social" element={<Social />} />
+                  <Route path="/progetti" element={<Projects />} />
+                  <Route path="/wiki" element={<Wiki />} />
+                  <Route path="/countdown" element={<Countdown />} />
                   <Route path="/store" element={<RequireAuth><Store /></RequireAuth>} />
-                  <Route path="/contatti" element={<RequireAuth><Contacts /></RequireAuth>} />
-                  <Route path="/mods" element={<RequireAuth><Mods /></RequireAuth>} />
+                  <Route path="/contatti" element={<Contacts />} />
+                  <Route path="/mods" element={<Mods />} />
                   <Route path="/mods/upload" element={<RequireAuth><ModUpload /></RequireAuth>} />
                   <Route path="/mods/my" element={<RequireAuth><MyMods /></RequireAuth>} />
                   <Route path="/mods/:id" element={<RequireAuth><ModDetail /></RequireAuth>} />

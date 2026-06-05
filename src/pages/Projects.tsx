@@ -104,7 +104,7 @@ const Projects: React.FC = () => {
                 <ProjectTag className="bg-surface-bright text-white">COMMUNITY LORE</ProjectTag>
                 <ProjectTag className="bg-tertiary text-black">MINECRAFT</ProjectTag>
               </div>
-              <h2 className="mb-2 font-headline-lg text-5xl text-white drop-shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:text-6xl">CONTROL SMP</h2>
+              <h2 className="mb-2 font-headline-lg text-5xl text-white drop-shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:text-6xl">??? SMP</h2>
               
               <div className="mb-4 flex items-center gap-2">
                 <div className="h-4 w-4 rounded-full border-2 border-black bg-red-500 shadow-[0_0_12px_rgba(255,0,0,1)]"></div>
@@ -123,9 +123,6 @@ const Projects: React.FC = () => {
                   <span className="material-symbols-outlined text-[20px]">play_arrow</span>
                   {t('projects.controlsmp.countdown')}
                 </Link>
-                <ProjectAction href={LINKS_CONFIG.map} icon="map" className="bg-surface-bright text-white">
-                  {t('projects.controlsmp.map')}
-                </ProjectAction>
               </div>
             </div>
           </div>

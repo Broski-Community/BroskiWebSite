@@ -26,18 +26,18 @@ const idolsData: IdolData[] = [
     colorClass: 'bg-primary',
     textColorClass: 'text-primary',
     btnTextColorClass: 'text-on-primary',
-    description: "Un player (non) normale di Minecraft. Sempre pronto a creare nuove dinamiche e storie sul server.",
-    defaultImage: 'https://placehold.co/600x400/2E5BFF/FFFFFF?text=un1verso'
+    description: "Un player (non) normale di Minecraft. Sempre pronto a creare nuove dinamiche e storie sul server. (è l'universo, btw)",
+    defaultImage: 'https://placehold.co/600x350/2E5BFF/FFFFFF?text=un1verso'
   },
   {
-    name: 'zZalix',
-    channelId: 'UCjvyukIQH5mPPFNswWrCSFA',
-    channelLink: 'https://youtube.com/@zzalixMC',
+    name: 'BlimMC',
+    channelId: 'UCHFhHTPQKk8uffihq4TbY9Q',
+    channelLink: 'https://youtube.com/@BlimMC',
     colorClass: 'bg-secondary',
     textColorClass: 'text-secondary',
     btnTextColorClass: 'text-on-secondary',
-    description: "Mente creativa e founder. Le sue idee instabili mantengono sempre alta la tensione nella community.",
-    defaultImage: 'https://placehold.co/600x400/FF1F44/FFFFFF?text=zZalix'
+    description: "E' molto vivace e ha sempre voglia di registrare nuovi video e proporre idee perfette.",
+    defaultImage: 'https://placehold.co/600x350/FF1F44/FFFFFF?text=Blim'
   },
   {
     name: 'Muffin',
@@ -46,18 +46,8 @@ const idolsData: IdolData[] = [
     colorClass: 'bg-error',
     textColorClass: 'text-error',
     btnTextColorClass: 'text-on-error',
-    description: "Imprevedibile e caotico. Se c'è un'esplosione o una trappola geniale, probabilmente c'è lui dietro.",
-    defaultImage: 'https://placehold.co/600x400/FF1F44/FFFFFF?text=Muffin'
-  },
-  {
-    name: 'Rossinho',
-    channelId: 'UCH8HPTvCZy0O2UpkWXRB6EA',
-    channelLink: 'https://youtube.com/@rossinhoofficial',
-    colorClass: 'bg-blue-600',
-    textColorClass: 'text-blue-600',
-    btnTextColorClass: 'text-white',
-    description: "Maestro del PvP e stratega. Il suo obiettivo? Diventare il miglior combattente di tutta Italia.",
-    defaultImage: 'https://placehold.co/600x400/2E5BFF/FFFFFF?text=Rossinho'
+    description: "E' uno dei più skillati del gruppo. E' determinato, saggio e in grado di fare qualunque cosa se vuole.",
+    defaultImage: 'https://placehold.co/600x350/FF1F44/FFFFFF?text=Muffin'
   }
 ];
 
@@ -99,9 +89,9 @@ const IdolCard: React.FC<{ data: IdolData }> = ({ data }) => {
   return (
     <div className="group relative flex min-h-[420px] flex-col overflow-hidden rounded-[2rem] border-[4px] border-black bg-surface-container p-5 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-2 hover:shadow-[11px_11px_0px_0px_rgba(0,0,0,1)]">
       <div className={`absolute -right-12 -top-12 h-32 w-32 rounded-full border-4 border-black opacity-80 transition-transform duration-700 group-hover:scale-125 ${data.colorClass}`}></div>
-      <div className="relative mb-5 h-48 overflow-hidden rounded-3xl border-[3px] border-black bg-surface-container-lowest shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+      <div className="relative mb-5 h-35 overflow-hidden rounded-3xl border-[3px] border-black bg-surface-container-lowest shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
         <img 
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" 
+          className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-110" 
           alt={video?.title || data.name} 
           src={video?.thumbnail || data.defaultImage} 
           onError={(e) => {
@@ -110,7 +100,9 @@ const IdolCard: React.FC<{ data: IdolData }> = ({ data }) => {
         />
         {video && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-            <span className="material-symbols-outlined rounded-full border-2 border-black bg-white p-3 text-5xl text-black shadow-[4px_4px_0_rgba(0,0,0,1)]">play_circle</span>
+            <a href={video.link} target="_blank" rel="noopener noreferrer">
+              <span className="material-symbols-outlined rounded-full border-2 border-black bg-white p-3 text-5xl text-black shadow-[4px_4px_0_rgba(0,0,0,1)]">play_circle</span>
+            </a>
           </div>
         )}
         <div className="absolute left-3 top-3 rounded-2xl border-2 border-black bg-black px-3 py-2 font-label-caps text-[10px] text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">

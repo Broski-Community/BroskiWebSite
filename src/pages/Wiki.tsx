@@ -134,7 +134,7 @@ const Wiki: React.FC = () => {
                     {t('wiki.community.discord.desc')}
                   </p>
                 </InfoCard>
-                <InfoCard title="Control SMP" icon="dns">
+                <InfoCard title="??? SMP" icon="dns">
                   <p className="text-sm text-on-surface-variant">
                     {t('wiki.community.smp.desc')}
                   </p>
@@ -162,12 +162,12 @@ const Wiki: React.FC = () => {
           </WikiSection>
         </div>
 
-        {/* Control SMP Section */}
+        {/* ??? SMP Section */}
         <div id="smp">
           <WikiSection icon="dns" title={t('wiki.smp.title')}>
             <div className="space-y-4">
               <p>
-                <strong className="text-white">Control SMP</strong> {t('wiki.smp.intro')}
+                <strong className="text-white">??? SMP</strong> {t('wiki.smp.intro')}
               </p>
 
               <div className="grid gap-4 sm:grid-cols-2">

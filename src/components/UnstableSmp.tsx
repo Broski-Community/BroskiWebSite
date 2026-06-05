@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { LINKS_CONFIG } from '../config/linksConfig';
 import { useLanguage } from '../context/LanguageContext';
 
 const UnstableSmp: React.FC = () => {
@@ -19,14 +18,14 @@ const UnstableSmp: React.FC = () => {
             {t('smp.badge')}
           </div>
           <h2 className="font-headline-lg text-[52px] uppercase leading-none tracking-tighter text-blue-500 drop-shadow-[5px_5px_0px_rgba(0,0,0,1)] md:text-[82px]">
-            CONTROL SMP
+            ??? SMP
           </h2>
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-2 rounded-2xl border-[2px] border-black bg-black px-3 py-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
               <div className="h-4 w-4 animate-pulse rounded-full border-[2px] border-black bg-red-500"></div>
-              <span className="font-label-caps text-label-caps text-white">SEASON 0 - OFFLINE</span>
+              <span className="font-label-caps text-label-caps text-white">0 - OFFLINE</span>
             </div>
-            <span className="rounded-2xl border-[2px] border-black bg-tertiary px-3 py-2 font-label-caps text-[11px] text-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">LORE COMMUNITY</span>
+            
           </div>
           <p className="mt-4 max-w-xl rounded-3xl border-[3px] border-black bg-surface-container p-4 font-body-lg text-body-lg font-bold text-on-surface-variant shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
             {t('smp.description')}
@@ -36,7 +35,7 @@ const UnstableSmp: React.FC = () => {
         <div className="flex w-full flex-col gap-4 md:items-end">
           <div className="w-full rounded-[2rem] border-[4px] border-black bg-surface-container-low p-4 shadow-[7px_7px_0px_0px_rgba(0,0,0,1)] md:max-w-md">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <span className="font-headline-md text-3xl text-white">S0</span>
+              <span className="font-headline-md text-3xl text-white">In arrivo!</span>
               <span className="material-symbols-outlined rounded-2xl border-2 border-black bg-secondary-container p-2 text-2xl text-white">swords</span>
             </div>
             <p className="font-label-caps text-[11px] text-on-surface-variant">{t('smp.countdown_info')}</p>
@@ -46,9 +45,6 @@ const UnstableSmp: React.FC = () => {
               <span>{t('smp.goto_countdown')}</span>
               <span className="font-label-caps text-[12px] opacity-80">{t('smp.of_control')}</span>
             </Link>
-            <a href={LINKS_CONFIG.map} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center rounded-3xl border-[4px] border-black bg-surface-bright px-5 py-5 text-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all active:translate-x-1 active:translate-y-1 active:shadow-none">
-              <span className="material-symbols-outlined text-3xl">map</span>
-            </a>
           </div>
         </div>
       </div>

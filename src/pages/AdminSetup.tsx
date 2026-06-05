@@ -93,6 +93,12 @@ const AdminSetup: React.FC = () => {
       .update({ role: 'admin' })
       .eq('id', user.id);
 
+
+    // *
+    // ! Zeph, poi qui puoi fare che bisogna approvare la richiesta dal pannello admin?
+    // *
+
+    
     setLoading(false);
 
     if (updateError) {

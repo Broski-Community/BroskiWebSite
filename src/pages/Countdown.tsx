@@ -96,7 +96,7 @@ const Countdown: React.FC = () => {
         {/* Badge */}
         <div className="inline-flex -rotate-2 items-center gap-2 rounded-2xl border-[3px] border-black bg-blue-600 px-4 py-2 font-label-caps text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           <span className="material-symbols-outlined text-[18px]">timer</span>
-          CONTROL SMP
+          ??? SMP
         </div>
 
         {/* Title */}

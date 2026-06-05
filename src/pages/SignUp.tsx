@@ -9,6 +9,7 @@ const SignUp: React.FC = () => {
   const { signUp } = useAuth();
   const { t } = useLanguage();
   const [minecraftUsername, setMinecraftUsername] = useState('');
+  // ! ZEPH! Anche questo dovrebbe avere bisogno di verifica!!! Altrimenti le persone possono usare un account inesistente.
   const [gdUsername, setGdUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

@@ -1015,7 +1015,7 @@ const AdminPanel: React.FC = () => {
         {/* COUNTDOWN TAB */}
         {activeTab === 'countdown' && (
           <div className="rounded-[2rem] border-[4px] border-black bg-surface-container p-6 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]">
-            <h2 className="mb-6 font-headline-md text-[28px] text-white">Countdown Control SMP</h2>
+            <h2 className="mb-6 font-headline-md text-[28px] text-white">Countdown ??? SMP</h2>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
               <div className="flex-1">
                 <label className="mb-2 block font-label-caps text-[12px] text-on-surface-variant">Data e ora target</label>
