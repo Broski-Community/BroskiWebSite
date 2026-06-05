@@ -9,6 +9,8 @@ interface NewsItem {
   id: string;
   title: string;
   content: string;
+  title_en: string | null;
+  content_en: string | null;
   category: string;
   variant: 'default' | 'urgent' | 'event';
   icon: string;
@@ -171,9 +173,12 @@ const AdminPanel: React.FC = () => {
   const [newsLoading, setNewsLoading] = useState(false);
   const [editingNews, setEditingNews] = useState<NewsItem | null>(null);
   const [showNewsForm, setShowNewsForm] = useState(false);
+  const [newsLang, setNewsLang] = useState<'it' | 'en'>('it');
   const [newsForm, setNewsForm] = useState({
     title: '',
     content: '',
+    title_en: '',
+    content_en: '',
     category: 'GENERALE',
     variant: 'default' as 'default' | 'urgent' | 'event',
     icon: 'newspaper',
@@ -305,16 +310,30 @@ const AdminPanel: React.FC = () => {
   // News CRUD
   const handleSaveNews = async (e: React.FormEvent) => {
     e.preventDefault();
+    const payload = {
+      title: newsForm.title,
+      content: newsForm.content,
+      title_en: newsForm.title_en || null,
+      content_en: newsForm.content_en || null,
+      category: newsForm.category,
+      variant: newsForm.variant,
+      icon: newsForm.icon,
+      active: newsForm.active,
+      order_index: newsForm.order_index,
+    };
     if (editingNews) {
-      await supabase.from('news').update(newsForm).eq('id', editingNews.id);
+      await supabase.from('news').update(payload).eq('id', editingNews.id);
     } else {
-      await supabase.from('news').insert([newsForm]);
+      await supabase.from('news').insert([payload]);
     }
     setShowNewsForm(false);
     setEditingNews(null);
+    setNewsLang('it');
     setNewsForm({
       title: '',
       content: '',
+      title_en: '',
+      content_en: '',
       category: 'GENERALE',
       variant: 'default',
       icon: 'newspaper',
@@ -332,9 +351,12 @@ const AdminPanel: React.FC = () => {
 
   const handleEditNews = (item: NewsItem) => {
     setEditingNews(item);
+    setNewsLang('it');
     setNewsForm({
       title: item.title,
       content: item.content,
+      title_en: item.title_en || '',
+      content_en: item.content_en || '',
       category: item.category,
       variant: item.variant,
       icon: item.icon,
@@ -574,9 +596,12 @@ const AdminPanel: React.FC = () => {
               <button
                 onClick={() => {
                   setEditingNews(null);
+                  setNewsLang('it');
                   setNewsForm({
                     title: '',
                     content: '',
+                    title_en: '',
+                    content_en: '',
                     category: 'GENERALE',
                     variant: 'default',
                     icon: 'newspaper',
@@ -600,12 +625,15 @@ const AdminPanel: React.FC = () => {
                 </h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1 block font-label-caps text-[11px] text-on-surface-variant">{t('admin.news.form.title')}</label>
+                    <label className="mb-1 block font-label-caps text-[11px] text-on-surface-variant">
+                      {t('admin.news.form.title')} {newsLang === 'en' && <span className="text-blue-400">(English)</span>}
+                    </label>
                     <input
                       type="text"
-                      value={newsForm.title}
-                      onChange={(e) => setNewsForm({ ...newsForm, title: e.target.value })}
-                      required
+                      value={newsLang === 'it' ? newsForm.title : newsForm.title_en}
+                      onChange={(e) => setNewsForm({ ...newsForm, [newsLang === 'it' ? 'title' : 'title_en']: e.target.value })}
+                      required={newsLang === 'it'}
+                      placeholder={newsLang === 'en' ? 'English title (optional)' : ''}
                       className="w-full rounded-xl border-[3px] border-black bg-surface-container px-3 py-2 text-sm text-on-surface shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
                     />
                   </div>
@@ -620,11 +648,14 @@ const AdminPanel: React.FC = () => {
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="mb-1 block font-label-caps text-[11px] text-on-surface-variant">{t('admin.news.form.content')}</label>
+                    <label className="mb-1 block font-label-caps text-[11px] text-on-surface-variant">
+                      {t('admin.news.form.content')} {newsLang === 'en' && <span className="text-blue-400">(English)</span>}
+                    </label>
                     <textarea
-                      value={newsForm.content}
-                      onChange={(e) => setNewsForm({ ...newsForm, content: e.target.value })}
-                      required
+                      value={newsLang === 'it' ? newsForm.content : newsForm.content_en}
+                      onChange={(e) => setNewsForm({ ...newsForm, [newsLang === 'it' ? 'content' : 'content_en']: e.target.value })}
+                      required={newsLang === 'it'}
+                      placeholder={newsLang === 'en' ? 'English content (optional)' : ''}
                       rows={3}
                       className="w-full rounded-xl border-[3px] border-black bg-surface-container px-3 py-2 text-sm text-on-surface shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
                     />
@@ -670,16 +701,28 @@ const AdminPanel: React.FC = () => {
                     <label htmlFor="active" className="font-label-caps text-[11px] text-on-surface-variant">Attiva</label>
                   </div>
                 </div>
-                <div className="mt-4 flex gap-3">
+                <div className="mt-4 flex items-center gap-3">
                   <button
                     type="submit"
                     className="rounded-xl border-[3px] border-black bg-primary-container px-6 py-2 font-label-caps text-[12px] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none"
                   >
                     SALVA
                   </button>
+                  {/* ITA/ENG Switch */}
+                  <div className="flex items-center gap-2 rounded-xl border-[3px] border-black bg-surface-container px-3 py-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                    <span className={`font-label-caps text-[11px] ${newsLang === 'it' ? 'text-primary-container font-bold' : 'text-on-surface-variant'}`}>ITA</span>
+                    <button
+                      type="button"
+                      onClick={() => setNewsLang(newsLang === 'it' ? 'en' : 'it')}
+                      className={`relative h-6 w-11 rounded-full border-2 border-black transition-colors ${newsLang === 'en' ? 'bg-blue-600' : 'bg-surface-container-highest'}`}
+                    >
+                      <span className={`absolute top-0.5 h-4 w-4 rounded-full border border-black bg-white transition-transform ${newsLang === 'en' ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                    </button>
+                    <span className={`font-label-caps text-[11px] ${newsLang === 'en' ? 'text-blue-400 font-bold' : 'text-on-surface-variant'}`}>ENG</span>
+                  </div>
                   <button
                     type="button"
-                    onClick={() => setShowNewsForm(false)}
+                    onClick={() => { setShowNewsForm(false); setNewsLang('it'); }}
                     className="rounded-xl border-[3px] border-black bg-surface-bright px-6 py-2 font-label-caps text-[12px] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none"
                   >
                     ANNULLA

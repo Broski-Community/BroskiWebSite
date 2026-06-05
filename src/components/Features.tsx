@@ -17,6 +17,8 @@ interface NewsItem {
   id: string;
   title: string;
   content: string;
+  title_en: string | null;
+  content_en: string | null;
   category: string;
   variant: 'default' | 'urgent' | 'event';
   icon: string;
@@ -25,7 +27,7 @@ interface NewsItem {
 }
 
 const Features: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -172,8 +174,8 @@ const Features: React.FC = () => {
     ? news.map((item, index) => ({
         id: index + 1,
         number: String(index + 1).padStart(2, '0') + '. ' + item.category.toUpperCase(),
-        title: item.title,
-        description: item.content,
+        title: (language === 'en' && item.title_en) ? item.title_en : item.title,
+        description: (language === 'en' && item.content_en) ? item.content_en : item.content,
         icon: item.icon,
         variant: item.variant === 'urgent' ? 'blue' : item.variant === 'event' ? 'secondary' : 'primary',
         colSpan: 'md:col-span-6',
