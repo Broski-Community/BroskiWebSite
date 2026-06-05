@@ -1,5 +1,5 @@
 export const LINKS_CONFIG = {
-  discord: 'https://discord.gg/bkhkJQNFTx', // Sostituisci con il link reale
+  discord: 'https://discord.gg/8CvbRWzyjA', // Sostituisci con il link reale
   github: 'https://github.com/broskicommunity',
   map: 'https://map.broskismp.it',
   store: 'https://store.broskismp.it',
@@ -10,6 +10,6 @@ export const LINKS_CONFIG = {
   youtube: 'https://youtube.com/@broskicommunity',
   
   // Link per la pagina Progetti
-  proposte: 'https://discord.gg/broski-proposte',
+  proposte: 'https://discord.gg/8CvbRWzyjA',
   downloadMods: 'https://modrinth.com/user/broskicommunity',
 };

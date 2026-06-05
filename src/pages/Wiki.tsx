@@ -152,7 +152,7 @@ const Wiki: React.FC = () => {
                   {t('wiki.community.join.title')}
                 </h3>
                 <ol className="list-inside list-decimal space-y-2 text-on-surface-variant">
-                  <li>{t('wiki.community.join.step1')} <a href="https://discord.gg/broski" target="_blank" rel="noopener noreferrer" className="font-bold text-primary-container underline">Discord</a></li>
+                  <li>{t('wiki.community.join.step1')} <a href="https://discord.gg/8CvbRWzyjA" target="_blank" rel="noopener noreferrer" className="font-bold text-primary-container underline">Discord</a></li>
                   <li>{t('wiki.community.join.step2')}</li>
                   <li>{t('wiki.community.join.step3')}</li>
                   <li>{t('wiki.community.join.step4')}</li>
@@ -365,7 +365,7 @@ const Wiki: React.FC = () => {
               </p>
               <div className="flex flex-wrap justify-center gap-4">
                 <a 
-                  href="https://discord.gg/broski" 
+                  href="https://discord.gg/8CvbRWzyjA" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-2xl border-[3px] border-black bg-white px-6 py-3 font-headline-md text-[18px] text-black shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1"
