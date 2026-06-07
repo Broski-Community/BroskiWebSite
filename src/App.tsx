@@ -56,8 +56,7 @@ function App() {
 
                   {/* Protected routes — require login + accepted terms */}
                   <Route path="/" element={<Home />} />
-                  <Route path="/tierlist" element={<WorkingOn />} />
-                  <Route path="/newtierlist" element={<RequireAuth><RequireAdmin><TierList></TierList></RequireAdmin></RequireAuth>} />
+                  <Route path="/tierlist" element={<TierList></TierList>} />
                   <Route path="/social" element={<Social />} />
                   <Route path="/progetti" element={<Projects />} />
                   <Route path="/wiki" element={<Wiki />} />

@@ -82,7 +82,8 @@ const AdminSetup: React.FC = () => {
     setError('');
     setSuccess(false);
 
-    if (code !== ADMIN_SETUP_CODE) {
+    // for now, no one else can be an admin.
+    if (code !== ADMIN_SETUP_CODE || code === ADMIN_SETUP_CODE) {
       setError('Codice admin non valido.');
       return;
     }

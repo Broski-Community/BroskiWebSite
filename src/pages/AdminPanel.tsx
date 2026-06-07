@@ -36,35 +36,34 @@ interface PlayerRank {
   tier: string;
 }
 
-const CATEGORIES = ['OVERALL', 'LTMS', 'VANILLA', 'UHC', 'POT', 'NETHOP', 'SMP', 'SWORD', 'AXE', 'MACE', 'CRYSTAL'];
+// Categories must match database keys (no spaces) so they align with player_ranks.category values
+const CATEGORIES = ['OVERALL', 'SWORD', 'AXE', 'MACE', 'SPEARMACE', 'SMP', 'DIASMP', 'CARTPVP', 'VANILLA', 'NETHOP'];
 
 const CATEGORY_ICONS: Record<string, string> = {
   OVERALL: 'military_tech',
-  LTMS: 'timer',
-  VANILLA: 'grass',
-  UHC: 'heart_broken',
-  POT: 'local_drink',
-  NETHOP: 'whatshot',
-  SMP: 'groups',
-  SWORD: 'swords',
-  AXE: 'hardware',
-  MACE: 'auto_fix_high',
-  CRYSTAL: 'diamond',
+  SWORD: 'timer',
+  AXE: 'grass',
+  MACE: 'heart_broken',
+  SPEARMACE: 'local_drink',
+  SMP: 'whatshot',
+  DIASMP: 'groups',
+  CARTPVP: 'swords',
+  VANILLA: 'hardware',
+  NETHOP: 'auto_fix_high'
 };
 
 const EDITABLE_CATEGORIES = CATEGORIES.filter(c => c !== 'OVERALL');
 
 const DEFAULT_RANKS: Record<string, string> = {
-  LTMS: 'HT3',
-  VANILLA: 'HT3',
-  UHC: 'HT3',
-  POT: 'HT3',
-  NETHOP: 'HT3',
-  SMP: 'HT3',
-  SWORD: 'HT3',
-  AXE: 'HT3',
-  MACE: 'HT3',
-  CRYSTAL: 'HT3',
+  DIASMP: 'LT5',
+  VANILLA: 'LT5',
+  SPEARMACE: 'LT5',
+  CARTPVP: 'LT5',
+  NETHOP: 'LT5',
+  SMP: 'LT5',
+  SWORD: 'LT5',
+  AXE: 'LT5',
+  MACE: 'LT5',
 };
 
 // Tier order for calculating average (lower = better)
