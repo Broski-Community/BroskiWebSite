@@ -34,7 +34,6 @@ import SavedProjects from './pages/SavedProjects'
 import CreatorProfile from './pages/CreatorProfile'
 import IdeaSubmit from './pages/IdeaSubmit'
 import MyIdeas from './pages/MyIdeas'
-import WorkingOn from './pages/WorkingOn'
 
 function App() {
   return (
