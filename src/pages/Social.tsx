@@ -125,11 +125,6 @@ const RankBadge = ({ rank }: { rank: Rank }) => {
   );
 };
 
-const getYoutubeHandle = (url: string) => {
-  if (url === '-' || !url.includes('@')) return null;
-  return url.split('@')[1];
-};
-
 const getMemberImage = (member: Member) => `/skins/${member.name}.png`;
 
 const getMemberStats = (t: (key: string) => string) => [
@@ -251,7 +246,7 @@ const MemberCard = ({ member, index, t }: { member: Member; index: number; t: (k
     'Zlem': '/social/zlem.webp'
   };
 
-  const [avatarUrl, setAvatarUrl] = useState(
+  const [avatarUrl] = useState(
     avatarUrlMap[member.name] || 
     `https://api.dicebear.com/7.x/initials/svg?seed=${member.discord}&backgroundColor=2E5BFF,FF1F44&textColor=ffffff`
   );
