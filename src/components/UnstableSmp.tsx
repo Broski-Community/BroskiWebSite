@@ -35,7 +35,7 @@ const UnstableSmp: React.FC = () => {
         <div className="flex w-full flex-col gap-4 md:items-end">
           <div className="w-full rounded-[2rem] border-[4px] border-black bg-surface-container-low p-4 shadow-[7px_7px_0px_0px_rgba(0,0,0,1)] md:max-w-md">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <span className="font-headline-md text-3xl text-white">COMING SOON!</span>
+              <span className="font-headline-md text-3xl text-white">COMING SOON</span>
               <span className="material-symbols-outlined rounded-2xl border-2 border-black bg-secondary-container p-2 text-2xl text-white">swords</span>
             </div>
             <p className="font-label-caps text-[11px] text-on-surface-variant">{t('smp.countdown_info')}</p>
