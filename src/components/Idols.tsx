@@ -49,7 +49,7 @@ const idolsData: IdolData[] = [
     btnTextColorClass: 'text-on-error',
     description: "E' uno dei più skillati del gruppo. E' determinato, saggio e in grado di fare qualunque cosa se vuole.",
     defaultImage: 'https://placehold.co/600x350/FF1F44/FFFFFF?text=Muffin',
-    fallbackVideoUrl: 'https://www.youtube.com/@il_Muffin/videos'
+    fallbackVideoUrl: 'https://www.youtube.com/watch?v=BBUWO2U8jrA'
   }
 ];
 
