@@ -403,12 +403,12 @@ const translations = {
     'signin.or': 'Oppure',
     'signin.create_account': 'CREA ACCOUNT',
 
-    // UnstableSmp
-    'smp.badge': 'SERVER FEATURED',
-    'smp.description': 'La rivoluzione. Vai a guardare i video dei nostri content creator qui sotto!',
-    'smp.countdown_info': 'Countdown e apertura stagione appena disponibili',
-    'smp.goto_countdown': 'VAI AL COUNTDOWN',
-    'smp.of_control': 'DELLA ??? SMP',
+    // UnstableSmp comp
+    'smp.badge': 'SMP PRIVATA??',
+    'smp.description': 'La Rivoluzione. No spoiler!',
+    'smp.countdown_info': 'Iscriviti ai nostri canali Youtube per essere il primo a vederla!',
+    'smp.goto_countdown': 'GUARDA I NOSTRI CANALI',
+    'smp.of_control': 'Canali YouTube dei membri',
 
     // Countdown
     'countdown.title': 'COUNTDOWN',
@@ -438,7 +438,7 @@ const translations = {
     'footer.legal': 'Legale',
     'footer.privacy': 'Privacy Policy',
     'footer.terms': 'Termini di Servizio',
-    'footer.disclaimer': 'NON È UN PRODOTTO UFFICIALE MINECRAFT.',
+    'footer.disclaimer': 'NON È UN PRODOTTO UFFICIALE DI MINECRAFT!',
 
     // Common
     'common.loading': 'Caricamento...',
@@ -520,12 +520,12 @@ const translations = {
     // Store
     'store.badge': 'BROSKI STORE',
     'store.title': 'MERCH IN ARRIVO',
-    'store.description': 'Il merch ufficiale della Broski Community sta arrivando. Resta sintonizzato per hoodie, tee, accessori e molto altro.',
-    'store.wip': 'Work in Progress',
+    'store.description': 'Il merch ufficiale della Broski Community sta arrivando. Cioè, ci vorrà un bel po\' però vabbè...',
+    'store.wip': 'Lavori In Corso!',
     'store.wip.desc': 'Stiamo preparando qualcosa di speciale per voi.',
     'store.notify': 'Seguici su Discord per sapere quando apriamo!',
-    'store.coming_soon': 'COMING SOON',
-    'store.banner': 'Spedizione in tutta Europa • Qualità Premium • Design Esclusivi',
+    'store.coming_soon': 'IN ARRIVO',
+    'store.banner': 'Spedizione in tutta Italia • Qualità Prioritaria • Design Esclusivi',
 
     // Mods
     'mods.badge': 'BROSKI MODS',
@@ -548,13 +548,13 @@ const translations = {
     'mods.no_saved': 'Nessun progetto salvato',
     'mods.no_saved_hint': 'Salva i progetti che ti interessano dalla loro pagina.',
     'idea.back': 'TORNA AI PROGETTI',
-    'idea.badge': 'IDEA FOLLE',
+    'idea.badge': 'IDEA?',
     'idea.title': 'PROPONI UN\'IDEA',
     'idea.subtitle': 'Hai un\'idea per la community? Scrivila qui e la leggeremo!',
     'idea.field.title': 'TITOLO DELL\'IDEA',
-    'idea.field.title_placeholder': 'es. Torneo PvP mensile con premi',
+    'idea.field.title_placeholder': 'es. Migliorate questo sito facendo...',
     'idea.field.content': 'LA TUA IDEA',
-    'idea.field.content_placeholder': 'Descrivi la tua idea in dettaglio...',
+    'idea.field.content_placeholder': 'Descrivi la tua idea IN DETTAGLIO...',
     'idea.field.rating': 'COM\'È STATA L\'ESPERIENZA?',
     'idea.field.rating_desc': 'Quanto ti è piaciuto proporre un\'idea? (1-5 stelle)',
     'idea.submit': 'INVIA IDEA',
@@ -949,11 +949,11 @@ const translations = {
     'signin.create_account': 'CREATE ACCOUNT',
 
     // UnstableSmp
-    'smp.badge': 'FEATURED SERVER',
-    'smp.description': 'The ultimate Italian anarchic Minecraft server. Go watch the videos of the YouTubers who brought this world to life!',
-    'smp.countdown_info': 'Countdown, map and season opening available soon',
-    'smp.goto_countdown': 'GO TO COUNTDOWN',
-    'smp.of_control': 'OF ??? SMP',
+    'smp.badge': 'PRIVATE SMP??',
+    'smp.description': 'The Revolution. No spoilers!',
+    'smp.countdown_info': 'Subscribe to our Youtube channels to be the first to see it!',
+    'smp.goto_countdown': 'SEE OUR CHANNELS',
+    'smp.of_control': 'Members YouTube channels',
 
     // Countdown
     'countdown.title': 'COUNTDOWN',
@@ -967,9 +967,9 @@ const translations = {
     'countdown.unmute': 'UNMUTE',
 
     // Idols
-    'idols.badge': 'FROM ??? SMP',
+    'idols.badge': 'FROM OUR MEMBERS',
     'idols.title': 'CREATOR WALL',
-    'idols.description': 'Videos, epic moments and creators fueling the chaos: check out the channels and catch the latest content.',
+    'idols.description': 'We are unknown. But we have a very intelligent plan to use.',
     'idols.creator': 'CREATOR',
     'idols.latest_video': 'Latest Video:',
     'idols.watch_video': 'LATEST VIDEO',

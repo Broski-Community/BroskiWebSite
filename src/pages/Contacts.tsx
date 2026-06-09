@@ -114,8 +114,8 @@ const Contacts: React.FC = () => {
                 <span className="material-symbols-outlined text-[32px] text-white">forum</span>
               </div>
               <div>
-                <p className="font-label-caps text-[11px] text-on-surface-variant">DISCORD</p>
-                <p className="font-headline-md text-[16px] text-white">Server Ufficiale</p>
+                <p className="font-label-caps text-[11px] text-on-surface-variant">TIKTOK</p>
+                <p className="font-headline-md text-[16px] text-white">@broskicom</p>
               </div>
             </a>
           )}
@@ -146,7 +146,7 @@ const Contacts: React.FC = () => {
               rel="noopener noreferrer"
               className="group flex items-center gap-4 rounded-[2rem] border-[4px] border-black bg-surface-container p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1 hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]"
             >
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-[3px] border-black bg-error shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform group-hover:-rotate-3">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-[3px] border-black bg-red-600 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform group-hover:-rotate-3">
                 <span className="material-symbols-outlined text-[32px] text-white">smart_display</span>
               </div>
               <div>
