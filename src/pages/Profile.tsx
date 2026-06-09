@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../config/supabaseClient';
 import ProfileEditor from '../components/ProfileEditor';
@@ -41,6 +41,9 @@ export interface ProfileCustomization {
   shadow_color: string;
   custom_css: string | null;
   custom_html: string | null;
+  pending_custom_html: string | null;
+  pending_custom_css: string | null;
+  code_status: string;
   editor_mode: string;
   layout: string;
   sections_order: string[];
@@ -63,6 +66,8 @@ const SHAPE_CLASSES: Record<string, string> = {
 
 const Profile: React.FC = () => {
   const { username } = useParams<{ username?: string }>();
+  const [searchParams] = useSearchParams();
+  const previewPending = searchParams.get('preview') === 'pending';
   const { profile: myProfile } = useAuth();
   const [profileData, setProfileData] = useState<ProfileCustomization | null>(null);
   const [loading, setLoading] = useState(true);
@@ -106,8 +111,8 @@ const Profile: React.FC = () => {
     return <ProfileEditor profileData={profileData} onSave={(updated) => { setProfileData(updated); setEditing(false); }} onCancel={() => setEditing(false)} />;
   }
 
-  // MODE: Code — render custom HTML directly
-  if (profileData.editor_mode === 'code' && profileData.custom_html) {
+  // MODE: Code — render custom HTML only if approved
+  if (profileData.editor_mode === 'code' && profileData.custom_html && profileData.code_status === 'approved' && !previewPending) {
     const pageBgStyle: React.CSSProperties = profileData.page_bg_gradient
       ? { background: profileData.page_bg_gradient.includes(',') ? `linear-gradient(135deg, ${profileData.page_bg_gradient})` : profileData.page_bg_gradient }
       : profileData.page_bg_color
@@ -128,6 +133,23 @@ const Profile: React.FC = () => {
       </div>
     );
   }
+
+  // Preview pending code (for owners reviewing)
+  if (previewPending && profileData.pending_custom_html && myProfile?.admin_rank === 'owner') {
+    return (
+      <div className="min-h-screen px-4 py-8 sm:px-8" style={{ background: profileData.page_bg_color || '#0a0a0a' }}>
+        <div className="mb-4 flex items-center gap-3 rounded-xl border-2 border-yellow-500 bg-yellow-500/10 px-4 py-3">
+          <span className="material-symbols-outlined text-yellow-400">preview</span>
+          <p className="text-sm text-yellow-300">ANTEPRIMA — Questo codice è in attesa di approvazione.</p>
+        </div>
+        {profileData.pending_custom_css && <style>{`.profile-custom { ${profileData.pending_custom_css} }`}</style>}
+        <div className="profile-custom mx-auto max-w-4xl" dangerouslySetInnerHTML={{ __html: profileData.pending_custom_html }} />
+      </div>
+    );
+  }
+
+  // Show pending banner if code is awaiting approval
+  const showPendingBanner = profileData.code_status === 'pending' && isOwnProfile;
 
   const accent = profileData.accent_color || '#2563eb';
   const textColor = profileData.text_color || '#ffffff';
@@ -303,6 +325,14 @@ const Profile: React.FC = () => {
             <span className="material-symbols-outlined text-[18px]">palette</span>
             PERSONALIZZA
           </button>
+        )}
+
+        {/* Pending approval banner */}
+        {showPendingBanner && (
+          <div className="mb-4 flex items-center gap-3 rounded-xl border-2 border-yellow-500 bg-yellow-500/10 px-4 py-3">
+            <span className="material-symbols-outlined text-[20px] text-yellow-400">hourglass_top</span>
+            <p className="text-sm text-yellow-300">Il tuo profilo personalizzato è in attesa di approvazione da un Owner. Stai vedendo la versione precedente.</p>
+          </div>
         )}
 
         {/* Profile Card */}

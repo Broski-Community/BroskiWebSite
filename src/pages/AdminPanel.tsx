@@ -177,7 +177,7 @@ const AdminPanel: React.FC = () => {
   const [ideaDropdownOpen, setIdeaDropdownOpen] = useState<string | null>(null);
 
   // Users state (only for owners)
-  const [allUsers, setAllUsers] = useState<{id: string; minecraft_username: string | null; gd_username: string | null; display_name: string | null; email: string; role: string; admin_rank: string | null; ign_verified: boolean; created_at: string}[]>([]);
+  const [allUsers, setAllUsers] = useState<{id: string; minecraft_username: string | null; gd_username: string | null; display_name: string | null; email: string; role: string; admin_rank: string | null; ign_verified: boolean; created_at: string; code_status?: string; pending_custom_html?: string | null; pending_custom_css?: string | null}[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [userSearch, setUserSearch] = useState('');
   const [usersPage, setUsersPage] = useState(0);
@@ -274,7 +274,7 @@ const AdminPanel: React.FC = () => {
     setUsersLoading(true);
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, minecraft_username, gd_username, display_name, email, role, admin_rank, ign_verified, created_at')
+      .select('id, minecraft_username, gd_username, display_name, email, role, admin_rank, ign_verified, created_at, code_status, pending_custom_html, pending_custom_css')
       .order('created_at', { ascending: false });
     if (!error && data) setAllUsers(data);
     setUsersLoading(false);
@@ -1376,6 +1376,55 @@ const AdminPanel: React.FC = () => {
         {/* USERS TAB - Owner only */}
         {activeTab === 'users' && profile?.admin_rank === 'owner' && (
           <div className="rounded-[2rem] border-[4px] border-black bg-surface-container p-6 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]">
+            {/* Pending Profile Approvals */}
+            {allUsers.filter(u => u.code_status === 'pending').length > 0 && (
+              <div className="mb-6 rounded-xl border-[3px] border-yellow-500 bg-yellow-500/10 p-4">
+                <h3 className="mb-3 flex items-center gap-2 font-headline-md text-[18px] text-yellow-400">
+                  <span className="material-symbols-outlined">pending_actions</span>
+                  Profili in attesa di approvazione ({allUsers.filter(u => u.code_status === 'pending').length})
+                </h3>
+                <div className="space-y-2">
+                  {allUsers.filter(u => u.code_status === 'pending').map(u => (
+                    <div key={`pending-${u.id}`} className="flex items-center justify-between rounded-lg border-2 border-black bg-surface-container-high p-3 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                      <div className="flex items-center gap-2">
+                        <img src={u.ign_verified ? `https://mc-heads.net/avatar/${u.minecraft_username}/32` : '/profilepng/profile.png'} alt="" className="h-8 w-8 rounded-lg border border-black" />
+                        <span className="font-headline-md text-[13px] text-white">{u.minecraft_username || u.email}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <a href={`/profilo/${u.minecraft_username}?preview=pending`} target="_blank" rel="noopener noreferrer"
+                          className="rounded-lg border-2 border-black bg-surface-bright px-3 py-1.5 font-label-caps text-[9px] text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all">
+                          ANTEPRIMA
+                        </a>
+                        <button onClick={async () => {
+                          // Approve: move pending to active
+                          await supabase.from('profiles').update({
+                            custom_html: u.pending_custom_html,
+                            custom_css: u.pending_custom_css,
+                            code_status: 'approved',
+                            pending_custom_html: null,
+                            pending_custom_css: null,
+                          }).eq('id', u.id);
+                          fetchUsers();
+                        }} className="rounded-lg border-2 border-black bg-green-600 px-3 py-1.5 font-label-caps text-[9px] text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all">
+                          ✓ APPROVA
+                        </button>
+                        <button onClick={async () => {
+                          await supabase.from('profiles').update({
+                            code_status: 'rejected',
+                            pending_custom_html: null,
+                            pending_custom_css: null,
+                          }).eq('id', u.id);
+                          fetchUsers();
+                        }} className="rounded-lg border-2 border-black bg-error px-3 py-1.5 font-label-caps text-[9px] text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all">
+                          ✗ RIFIUTA
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="mb-6 flex items-center justify-between">
               <h2 className="font-headline-md text-[28px] text-white">Gestione Utenti</h2>
               <span className="font-label-caps text-[11px] text-on-surface-variant">{allUsers.length} utenti totali</span>

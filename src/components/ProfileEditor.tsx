@@ -189,14 +189,35 @@ const ProfileEditor: React.FC<Props> = ({ profileData, onSave, onCancel }) => {
         border_color: form.border_color,
         border_radius: form.border_radius,
         shadow_color: form.shadow_color,
-        custom_css: form.custom_css || null,
-        custom_html: form.custom_html || null,
         editor_mode: form.editor_mode,
         social_links: socialLinks,
         interests: form.interests,
         active_badges: form.active_badges,
         theme: form.theme,
       };
+
+      // Code mode: owners approve instantly, others go through review
+      if (form.editor_mode === 'code' && (form.custom_html || form.custom_css)) {
+        if (isOwner) {
+          updateData.custom_html = form.custom_html || null;
+          updateData.custom_css = form.custom_css || null;
+          updateData.code_status = 'approved';
+          updateData.pending_custom_html = null;
+          updateData.pending_custom_css = null;
+        } else {
+          // Save to pending fields, keep existing approved code
+          updateData.pending_custom_html = form.custom_html || null;
+          updateData.pending_custom_css = form.custom_css || null;
+          updateData.code_status = 'pending';
+        }
+      } else {
+        // Simple mode - no code approval needed
+        updateData.custom_css = form.custom_css || null;
+        updateData.custom_html = null;
+        updateData.code_status = 'none';
+        updateData.pending_custom_html = null;
+        updateData.pending_custom_css = null;
+      }
 
       if (mcChanged && !isOwner) {
         updateData.ign_verified = false;
