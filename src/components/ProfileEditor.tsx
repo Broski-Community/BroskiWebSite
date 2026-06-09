@@ -71,7 +71,15 @@ const ProfileEditor: React.FC<Props> = ({ profileData, onSave, onCancel }) => {
     avatar_border_animated: profileData.avatar_border_animated || false,
     banner_gradient: profileData.banner_gradient || '',
     card_background: profileData.card_background || '',
-    spotify_url: profileData.spotify_url || '',
+    spotify_iframe: profileData.spotify_iframe || '',
+    page_bg_color: profileData.page_bg_color || '',
+    page_bg_gradient: profileData.page_bg_gradient || '',
+    text_color: profileData.text_color || '#ffffff',
+    border_style: profileData.border_style || 'solid',
+    border_color: profileData.border_color || '#000000',
+    border_radius: profileData.border_radius || '2rem',
+    shadow_color: profileData.shadow_color || '#000000',
+    custom_css: profileData.custom_css || '',
     social_youtube: (profileData.social_links as Record<string, string>)?.youtube || '',
     social_twitch: (profileData.social_links as Record<string, string>)?.twitch || '',
     social_discord: (profileData.social_links as Record<string, string>)?.discord || '',
@@ -160,7 +168,15 @@ const ProfileEditor: React.FC<Props> = ({ profileData, onSave, onCancel }) => {
         banner_url: bannerUrl,
         banner_gradient: form.banner_gradient || null,
         card_background: form.card_background || null,
-        spotify_url: form.spotify_url || null,
+        spotify_iframe: form.spotify_iframe || null,
+        page_bg_color: form.page_bg_color || null,
+        page_bg_gradient: form.page_bg_gradient || null,
+        text_color: form.text_color,
+        border_style: form.border_style,
+        border_color: form.border_color,
+        border_radius: form.border_radius,
+        shadow_color: form.shadow_color,
+        custom_css: form.custom_css || null,
         social_links: socialLinks,
         interests: form.interests,
         active_badges: form.active_badges,
@@ -259,6 +275,35 @@ const ProfileEditor: React.FC<Props> = ({ profileData, onSave, onCancel }) => {
               </div>
             </Section>
 
+            {/* Page & Borders */}
+            <Section title="PAGINA & BORDI">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="Sfondo Pagina (hex)" value={form.page_bg_color} onChange={v => setForm({ ...form, page_bg_color: v })} placeholder="#0a0a0a" />
+                <Field label="Sfondo Pagina Gradient" value={form.page_bg_gradient} onChange={v => setForm({ ...form, page_bg_gradient: v })} placeholder="#0a0a0a,#1a1a2e,#000" />
+                <div>
+                  <label className="mb-1 block font-label-caps text-[10px] text-on-surface-variant">Colore Testo</label>
+                  <input type="color" value={form.text_color} onChange={e => setForm({ ...form, text_color: e.target.value })} className="h-10 w-full cursor-pointer rounded-xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]" />
+                </div>
+                <div>
+                  <label className="mb-1 block font-label-caps text-[10px] text-on-surface-variant">Colore Bordi Card</label>
+                  <input type="color" value={form.border_color} onChange={e => setForm({ ...form, border_color: e.target.value })} className="h-10 w-full cursor-pointer rounded-xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]" />
+                </div>
+                <div>
+                  <label className="mb-1 block font-label-caps text-[10px] text-on-surface-variant">Colore Ombra</label>
+                  <input type="color" value={form.shadow_color} onChange={e => setForm({ ...form, shadow_color: e.target.value })} className="h-10 w-full cursor-pointer rounded-xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]" />
+                </div>
+                <Field label="Border Radius" value={form.border_radius} onChange={v => setForm({ ...form, border_radius: v })} placeholder="2rem" />
+                <Select label="Stile Bordo" value={form.border_style} options={[{value:'solid',label:'Solido'},{value:'dashed',label:'Tratteggiato'},{value:'dotted',label:'Puntini'},{value:'double',label:'Doppio'},{value:'none',label:'Nessuno'}]} onChange={v => setForm({ ...form, border_style: v })} />
+              </div>
+            </Section>
+
+            {/* Custom CSS */}
+            <Section title="CSS PERSONALIZZATO (AVANZATO)">
+              <textarea value={form.custom_css} onChange={e => setForm({ ...form, custom_css: e.target.value })} rows={3} placeholder="background: red; border: 2px dashed gold; ..."
+                className="w-full rounded-xl border-[3px] border-black bg-surface-container-high px-3 py-2 text-xs text-on-surface shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] font-mono" />
+              <p className="mt-1 text-[9px] text-on-surface-variant/60">Proprietà CSS applicate direttamente alla card del profilo</p>
+            </Section>
+
             {/* Social */}
             <Section title="SOCIAL LINKS">
               <div className="grid gap-3 sm:grid-cols-2">
@@ -272,8 +317,13 @@ const ProfileEditor: React.FC<Props> = ({ profileData, onSave, onCancel }) => {
             </Section>
 
             {/* Spotify */}
-            <Section title="MUSICA">
-              <Field label="Spotify URL (canzone o playlist)" value={form.spotify_url} onChange={v => setForm({ ...form, spotify_url: v })} placeholder="https://open.spotify.com/track/..." />
+            <Section title="MUSICA (SPOTIFY EMBED)">
+              <div>
+                <label className="mb-1 block font-label-caps text-[10px] text-on-surface-variant">Incolla il codice iframe di Spotify</label>
+                <textarea value={form.spotify_iframe} onChange={e => setForm({ ...form, spotify_iframe: e.target.value })} rows={3} placeholder='<iframe src="https://open.spotify.com/embed/track/..." ...'
+                  className="w-full rounded-xl border-[3px] border-black bg-surface-container-high px-3 py-2 text-xs text-on-surface shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] font-mono" />
+                <p className="mt-1 text-[9px] text-on-surface-variant/60">Vai su Spotify → Condividi → Copia codice embed</p>
+              </div>
             </Section>
 
             {/* Interests */}
