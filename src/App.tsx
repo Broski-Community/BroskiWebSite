@@ -34,6 +34,7 @@ import SavedProjects from './pages/SavedProjects'
 import CreatorProfile from './pages/CreatorProfile'
 import IdeaSubmit from './pages/IdeaSubmit'
 import MyIdeas from './pages/MyIdeas'
+import Profile from './pages/Profile'
 
 function App() {
   return (
@@ -73,6 +74,7 @@ function App() {
                   <Route path="/mods/creator/:creatorId" element={<CreatorProfile />} />
                   <Route path="/progetti/idea" element={<RequireAuth><IdeaSubmit /></RequireAuth>} />
                   <Route path="/mie-idee" element={<RequireAuth><MyIdeas /></RequireAuth>} />
+                  <Route path="/profilo" element={<RequireAuth><Profile /></RequireAuth>} />
                   <Route path="/admin/setup" element={<RequireAuth><AdminSetup /></RequireAuth>} />
                   <Route path="/admin" element={<RequireAuth><RequireAdmin><AdminPanel /></RequireAdmin></RequireAuth>} />
                   <Route path="*" element={<NotFound />} />

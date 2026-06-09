@@ -120,6 +120,22 @@ const Header: React.FC = () => {
             <span className="material-symbols-outlined text-[22px] text-white">{mobileMenuOpen ? 'close' : 'menu'}</span>
           </button>
 
+          {/* Language Toggle - visible to all */}
+          <div className="hidden sm:flex items-center gap-1 rounded-lg border-2 border-black bg-black p-1">
+            <button
+              onClick={() => setLanguage('it')}
+              className={`rounded px-2 py-1 font-label-caps text-[10px] transition-all ${language === 'it' ? 'bg-tertiary text-black' : 'text-white hover:bg-white/10'}`}
+            >
+              IT
+            </button>
+            <button
+              onClick={() => setLanguage('en')}
+              className={`rounded px-2 py-1 font-label-caps text-[10px] transition-all ${language === 'en' ? 'bg-tertiary text-black' : 'text-white hover:bg-white/10'}`}
+            >
+              EN
+            </button>
+          </div>
+
           {/* Profile button */}
           <div className="relative">
             <button
@@ -138,32 +154,18 @@ const Header: React.FC = () => {
             </button>
           {menuOpen && (
             <div className="absolute right-0 top-full mt-2 flex w-44 flex-col gap-2 rounded-2xl border-[3px] border-black bg-surface-container p-3 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-              <div className="flex items-center gap-2 rounded-xl border-2 border-black bg-surface-container-high px-3 py-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+              <TransitionLink
+                to="/profilo"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 rounded-xl border-2 border-black bg-surface-container-high px-3 py-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none"
+              >
                 <img
                   src={`https://mc-heads.net/avatar/${profile.minecraft_username}/64`}
                   alt=""
                   className="h-6 w-6 rounded-lg border border-black"
                 />
                 <span className="truncate font-label-caps text-[12px] text-white">{profile.minecraft_username}</span>
-              </div>
-              {/* Language Toggle */}
-              <div className="flex items-center justify-between rounded-xl border-[2px] border-black bg-surface-container-high px-3 py-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                <span className="font-label-caps text-[11px] text-on-surface-variant">{t('nav.language')}</span>
-                <div className="flex items-center gap-1 rounded-lg border-2 border-black bg-black p-1">
-                  <button
-                    onClick={() => setLanguage('it')}
-                    className={`rounded px-2 py-1 font-label-caps text-[10px] transition-all ${language === 'it' ? 'bg-tertiary text-black' : 'text-white hover:bg-white/10'}`}
-                  >
-                    IT
-                  </button>
-                  <button
-                    onClick={() => setLanguage('en')}
-                    className={`rounded px-2 py-1 font-label-caps text-[10px] transition-all ${language === 'en' ? 'bg-tertiary text-black' : 'text-white hover:bg-white/10'}`}
-                  >
-                    EN
-                  </button>
-                </div>
-              </div>
+              </TransitionLink>
 
               {profile.role === 'admin' && (
                 <TransitionLink
@@ -211,6 +213,21 @@ const Header: React.FC = () => {
           >
             <span className="material-symbols-outlined text-[22px] text-white">{mobileMenuOpen ? 'close' : 'menu'}</span>
           </button>
+          {/* Language Toggle - visible to all */}
+          <div className="hidden sm:flex items-center gap-1 rounded-lg border-2 border-black bg-black p-1">
+            <button
+              onClick={() => setLanguage('it')}
+              className={`rounded px-2 py-1 font-label-caps text-[10px] transition-all ${language === 'it' ? 'bg-tertiary text-black' : 'text-white hover:bg-white/10'}`}
+            >
+              IT
+            </button>
+            <button
+              onClick={() => setLanguage('en')}
+              className={`rounded px-2 py-1 font-label-caps text-[10px] transition-all ${language === 'en' ? 'bg-tertiary text-black' : 'text-white hover:bg-white/10'}`}
+            >
+              EN
+            </button>
+          </div>
           <TransitionLink
             to="/signin"
             className="bg-red-500 text-white font-headline-md uppercase tracking-tighter px-4 py-2 border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-red-400 hover:translate-y-1 hover:translate-x-1 transition-all active:translate-y-2 active:translate-x-2 flex items-center gap-2 rounded-2xl"
