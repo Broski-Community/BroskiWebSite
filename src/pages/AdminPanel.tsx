@@ -180,6 +180,8 @@ const AdminPanel: React.FC = () => {
   const [allUsers, setAllUsers] = useState<{id: string; minecraft_username: string | null; gd_username: string | null; email: string; role: string; admin_rank: string | null; ign_verified: boolean; created_at: string}[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [userSearch, setUserSearch] = useState('');
+  const [usersPage, setUsersPage] = useState(0);
+  const USERS_PER_PAGE = 15;
   
   // News state
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -1384,7 +1386,7 @@ const AdminPanel: React.FC = () => {
               <input
                 type="text"
                 value={userSearch}
-                onChange={(e) => setUserSearch(e.target.value)}
+                onChange={(e) => { setUserSearch(e.target.value); setUsersPage(0); }}
                 placeholder="Cerca per username o email..."
                 className="w-full rounded-xl border-[3px] border-black bg-surface-container-high px-4 py-2 text-sm text-on-surface shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
               />
@@ -1394,87 +1396,125 @@ const AdminPanel: React.FC = () => {
               <div className="flex justify-center py-8">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-container border-t-transparent" />
               </div>
-            ) : (
-              <div className="space-y-3 max-h-[600px] overflow-y-auto">
-                {allUsers
-                  .filter(u => {
-                    const q = userSearch.toLowerCase();
-                    return !q || (u.minecraft_username?.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
-                  })
-                  .map((u) => (
-                  <div key={u.id} className="flex flex-col gap-3 rounded-xl border-[3px] border-black bg-surface-container-high p-4 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={u.ign_verified ? `https://mc-heads.net/avatar/${u.minecraft_username}/48` : '/profilepng/bde5a0ac04e56a64.png'}
-                        alt=""
-                        className="h-10 w-10 rounded-xl border-2 border-black"
-                      />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-headline-md text-[14px] text-white">{u.minecraft_username || 'N/A'}</span>
-                          {!u.ign_verified && (
-                            <span className="rounded border border-yellow-500 bg-yellow-500/20 px-1.5 py-0.5 font-label-caps text-[8px] text-yellow-400">NON VERIFICATO</span>
-                          )}
-                          {u.admin_rank && (
-                            <span className={`rounded border-2 border-black px-1.5 py-0.5 font-label-caps text-[8px] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${
-                              u.admin_rank === 'owner' ? 'bg-tertiary text-black' :
-                              u.admin_rank === 'admin' ? 'bg-primary-container text-white' :
-                              u.admin_rank === 'mod' ? 'bg-blue-600 text-white' :
-                              'bg-green-600 text-white'
-                            }`}>{u.admin_rank.toUpperCase()}</span>
-                          )}
+            ) : (() => {
+              const filtered = allUsers.filter(u => {
+                const q = userSearch.toLowerCase();
+                return !q || (u.minecraft_username?.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+              });
+              const totalPages = Math.ceil(filtered.length / USERS_PER_PAGE);
+              const paged = filtered.slice(usersPage * USERS_PER_PAGE, (usersPage + 1) * USERS_PER_PAGE);
+
+              return (
+                <>
+                  <div className="space-y-3">
+                    {paged.map((u) => (
+                      <div key={u.id} className="flex flex-col gap-3 rounded-xl border-[3px] border-black bg-surface-container-high p-4 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={u.ign_verified ? `https://mc-heads.net/avatar/${u.minecraft_username}/48` : '/profilepng/profile.png'}
+                            alt=""
+                            className="h-10 w-10 rounded-xl border-2 border-black"
+                          />
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-headline-md text-[14px] text-white">{u.minecraft_username || 'N/A'}</span>
+                              {!u.ign_verified && (
+                                <span className="rounded border border-yellow-500 bg-yellow-500/20 px-1.5 py-0.5 font-label-caps text-[8px] text-yellow-400">NON VERIFICATO</span>
+                              )}
+                              {u.admin_rank && (
+                                <span className={`rounded border-2 border-black px-1.5 py-0.5 font-label-caps text-[8px] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${
+                                  u.admin_rank === 'owner' ? 'bg-tertiary text-black' :
+                                  u.admin_rank === 'admin' ? 'bg-primary-container text-white' :
+                                  u.admin_rank === 'mod' ? 'bg-blue-600 text-white' :
+                                  'bg-green-600 text-white'
+                                }`}>{u.admin_rank.toUpperCase()}</span>
+                              )}
+                            </div>
+                            <span className="text-xs text-on-surface-variant">{u.email}</span>
+                          </div>
                         </div>
-                        <span className="text-xs text-on-surface-variant">{u.email}</span>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {!u.ign_verified && (
+                            <button
+                              onClick={async () => {
+                                await supabase.from('profiles').update({ ign_verified: true }).eq('id', u.id);
+                                fetchUsers();
+                              }}
+                              className="rounded-lg border-2 border-black bg-green-600 px-3 py-1.5 font-label-caps text-[10px] text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5"
+                            >
+                              ✓ APPROVA IGN
+                            </button>
+                          )}
+                          <select
+                            value={u.admin_rank || 'user'}
+                            onChange={async (e) => {
+                              const val = e.target.value;
+                              if (val === 'user') {
+                                await supabase.from('profiles').update({ role: 'user', admin_rank: null }).eq('id', u.id);
+                              } else {
+                                await supabase.from('profiles').update({ role: 'admin', admin_rank: val }).eq('id', u.id);
+                              }
+                              fetchUsers();
+                            }}
+                            className="rounded-lg border-2 border-black bg-surface-container px-2 py-1.5 font-label-caps text-[10px] text-on-surface shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                          >
+                            <option value="user">User</option>
+                            <option value="tier_tester">Tier Tester</option>
+                            <option value="mod">Mod</option>
+                            <option value="admin">Admin</option>
+                            <option value="owner">Owner</option>
+                          </select>
+                          <button
+                            onClick={async () => {
+                              if (!confirm(`Eliminare l'utente ${u.minecraft_username || u.email}? Il profilo verrà rimosso.`)) return;
+                              // Elimina prima le referenze
+                              await supabase.from('mod_messages').delete().eq('author_id', u.id);
+                              await supabase.from('ideas').delete().eq('author_id', u.id);
+                              // Poi elimina il profilo
+                              const { error: delError } = await supabase.from('profiles').delete().eq('id', u.id);
+                              if (delError) {
+                                alert(`Errore: ${delError.message}`);
+                              } else {
+                                fetchUsers();
+                              }
+                            }}
+                            className="rounded-lg border-2 border-black bg-error-container p-1.5 text-on-error-container shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">delete</span>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {!u.ign_verified && (
-                        <button
-                          onClick={async () => {
-                            await supabase.from('profiles').update({ ign_verified: true }).eq('id', u.id);
-                            fetchUsers();
-                          }}
-                          className="rounded-lg border-2 border-black bg-green-600 px-3 py-1.5 font-label-caps text-[10px] text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5"
-                        >
-                          ✓ APPROVA IGN
-                        </button>
-                      )}
-                      <select
-                        value={u.admin_rank || 'user'}
-                        onChange={async (e) => {
-                          const val = e.target.value;
-                          if (val === 'user') {
-                            await supabase.from('profiles').update({ role: 'user', admin_rank: null }).eq('id', u.id);
-                          } else {
-                            await supabase.from('profiles').update({ role: 'admin', admin_rank: val }).eq('id', u.id);
-                          }
-                          fetchUsers();
-                        }}
-                        className="rounded-lg border-2 border-black bg-surface-container px-2 py-1.5 font-label-caps text-[10px] text-on-surface shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                      >
-                        <option value="user">User</option>
-                        <option value="tier_tester">Tier Tester</option>
-                        <option value="mod">Mod</option>
-                        <option value="admin">Admin</option>
-                        <option value="owner">Owner</option>
-                      </select>
+                    ))}
+                    {filtered.length === 0 && (
+                      <p className="py-8 text-center text-on-surface-variant">Nessun utente trovato.</p>
+                    )}
+                  </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="mt-4 flex items-center justify-center gap-2">
                       <button
-                        onClick={async () => {
-                          if (!confirm(`Eliminare l'utente ${u.minecraft_username || u.email}? Questa azione è irreversibile.`)) return;
-                          await supabase.from('profiles').delete().eq('id', u.id);
-                          await supabase.from('mod_messages').delete().eq('author_id', u.id);
-                          // Nota: eliminare da auth.users richiede service role, non possibile da client
-                          fetchUsers();
-                        }}
-                        className="rounded-lg border-2 border-black bg-error-container p-1.5 text-on-error-container shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5"
+                        onClick={() => setUsersPage(p => Math.max(0, p - 1))}
+                        disabled={usersPage === 0}
+                        className="rounded-lg border-2 border-black bg-surface-container-high px-3 py-2 font-label-caps text-[10px] text-on-surface shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-40"
                       >
-                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                        ← PREC
+                      </button>
+                      <span className="font-label-caps text-[11px] text-on-surface-variant">
+                        {usersPage + 1} / {totalPages}
+                      </span>
+                      <button
+                        onClick={() => setUsersPage(p => Math.min(totalPages - 1, p + 1))}
+                        disabled={usersPage >= totalPages - 1}
+                        className="rounded-lg border-2 border-black bg-surface-container-high px-3 py-2 font-label-caps text-[10px] text-on-surface shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-40"
+                      >
+                        SUCC →
                       </button>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  )}
+                </>
+              );
+            })()}
           </div>
         )}
       </div>

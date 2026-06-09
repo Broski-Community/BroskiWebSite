@@ -143,7 +143,7 @@ const Header: React.FC = () => {
               className="relative flex items-center gap-2 rounded-2xl border-[3px] border-black bg-surface-container px-2 py-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none"
             >
               <img
-                src={profile.ign_verified ? `https://mc-heads.net/avatar/${profile.minecraft_username}/64` : '/profilepng/bde5a0ac04e56a64.png'}
+                src={profile.ign_verified ? `https://mc-heads.net/avatar/${profile.minecraft_username}/64` : '/profilepng/profile.png'}
                 alt="Profilo"
                 className="h-8 w-8 rounded-xl border-2 border-black"
               />
@@ -160,7 +160,7 @@ const Header: React.FC = () => {
                 className="flex items-center gap-2 rounded-xl border-2 border-black bg-surface-container-high px-3 py-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none"
               >
                 <img
-                  src={profile.ign_verified ? `https://mc-heads.net/avatar/${profile.minecraft_username}/64` : '/profilepng/bde5a0ac04e56a64.png'}
+                  src={profile.ign_verified ? `https://mc-heads.net/avatar/${profile.minecraft_username}/64` : '/profilepng/profile.png'}
                   alt=""
                   className="h-6 w-6 rounded-lg border border-black"
                 />
