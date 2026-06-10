@@ -205,11 +205,13 @@ const Profile: React.FC = () => {
     borderStyle: 'solid',
   };
 
-  // Extract spotify src from iframe string
-  const spotifySrc = (() => {
+  // Extract spotify src and height from iframe string
+  const spotifyEmbed = (() => {
     if (!profileData.spotify_iframe) return null;
-    const match = profileData.spotify_iframe.match(/src="([^"]+)"/);
-    return match ? match[1] : null;
+    const srcMatch = profileData.spotify_iframe.match(/src="([^"]+)"/);
+    const heightMatch = profileData.spotify_iframe.match(/height="(\d+)"/);
+    if (!srcMatch) return null;
+    return { src: srcMatch[1], height: heightMatch ? parseInt(heightMatch[1]) : 80 };
   })();
 
   // Render section by key
@@ -295,11 +297,11 @@ const Profile: React.FC = () => {
           </div>
         );
       case 'spotify':
-        if (!spotifySrc) return null;
+        if (!spotifyEmbed) return null;
         return (
           <div key={key} className="px-6 pt-4 pb-2 sm:px-8">
-            <iframe src={spotifySrc} width="100%" height="152" allow="encrypted-media; autoplay; clipboard-write; fullscreen; picture-in-picture" loading="lazy"
-              className="rounded-xl" style={{ border: `2px solid ${accent}44` }} />
+            <iframe src={spotifyEmbed.src} width="100%" height={spotifyEmbed.height} allow="encrypted-media; autoplay; clipboard-write; fullscreen; picture-in-picture" loading="lazy"
+              style={{ borderRadius: '12px', border: 'none' }} />
           </div>
         );
       default:
