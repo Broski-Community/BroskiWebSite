@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../../config/supabaseClient';
 import { getRandomSyllable, loadDictionary } from '../../utils/bombPartyDictionary';
+import { useAuth } from '../../context/AuthContext';
 import type { RoomState, BombPartyPlayer, RoomSettings } from '../../pages/BombParty';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
@@ -29,6 +30,8 @@ const DEFAULT_SETTINGS: RoomSettings = {
 };
 
 const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, setRoomState }) => {
+  const { profile } = useAuth();
+  const isLoggedIn = !!profile?.minecraft_username;
   const [joinCode, setJoinCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -339,18 +342,27 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
         </div>
 
         <div className="space-y-4">
-          {/* Nickname */}
-          <div>
-            <label className="mb-1 block font-label-caps text-[11px] text-on-surface-variant">NICKNAME</label>
-            <input
-              type="text"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              placeholder="Il tuo nome..."
-              maxLength={16}
-              className="w-full rounded-xl border-[3px] border-black bg-surface-container-high px-4 py-3 font-body-lg text-white placeholder:text-on-surface-variant/50 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:outline-none focus:ring-2 focus:ring-primary-container"
-            />
-          </div>
+          {/* Nickname - solo se non loggato */}
+          {!isLoggedIn && (
+            <div>
+              <label className="mb-1 block font-label-caps text-[11px] text-on-surface-variant">NICKNAME</label>
+              <input
+                type="text"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                placeholder="Il tuo nome..."
+                maxLength={16}
+                className="w-full rounded-xl border-[3px] border-black bg-surface-container-high px-4 py-3 font-body-lg text-white placeholder:text-on-surface-variant/50 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:outline-none focus:ring-2 focus:ring-primary-container"
+              />
+            </div>
+          )}
+          {isLoggedIn && (
+            <div className="flex items-center gap-2 rounded-xl border-[2px] border-black bg-surface-container-high p-3">
+              <span className="material-symbols-outlined text-[18px] text-primary-container">person</span>
+              <span className="font-headline-md text-[14px] text-white">{nickname}</span>
+              <span className="ml-auto rounded-lg bg-green-600/20 px-2 py-0.5 font-label-caps text-[9px] text-green-400">LOGGATO</span>
+            </div>
+          )}
 
           {/* ⏲ Durata minima del turno */}
           <div>
@@ -475,17 +487,27 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
         </div>
 
         <div className="space-y-4">
-          <div>
-            <label className="mb-1 block font-label-caps text-[11px] text-on-surface-variant">NICKNAME</label>
-            <input
-              type="text"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              placeholder="Il tuo nome..."
-              maxLength={16}
-              className="w-full rounded-xl border-[3px] border-black bg-surface-container-high px-4 py-3 font-body-lg text-white placeholder:text-on-surface-variant/50 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:outline-none focus:ring-2 focus:ring-primary-container"
-            />
-          </div>
+          {/* Nickname - solo se non loggato */}
+          {!isLoggedIn && (
+            <div>
+              <label className="mb-1 block font-label-caps text-[11px] text-on-surface-variant">NICKNAME</label>
+              <input
+                type="text"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                placeholder="Il tuo nome..."
+                maxLength={16}
+                className="w-full rounded-xl border-[3px] border-black bg-surface-container-high px-4 py-3 font-body-lg text-white placeholder:text-on-surface-variant/50 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:outline-none focus:ring-2 focus:ring-primary-container"
+              />
+            </div>
+          )}
+          {isLoggedIn && (
+            <div className="flex items-center gap-2 rounded-xl border-[2px] border-black bg-surface-container-high p-3">
+              <span className="material-symbols-outlined text-[18px] text-primary-container">person</span>
+              <span className="font-headline-md text-[14px] text-white">{nickname}</span>
+              <span className="ml-auto rounded-lg bg-green-600/20 px-2 py-0.5 font-label-caps text-[9px] text-green-400">LOGGATO</span>
+            </div>
+          )}
 
           <div>
             <label className="mb-1 block font-label-caps text-[11px] text-on-surface-variant">CODICE STANZA</label>
