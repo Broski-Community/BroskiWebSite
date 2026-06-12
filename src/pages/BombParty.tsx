@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import PageAnimator from '../components/PageAnimator';
 import BombPartyLobby from '../components/bombparty/BombPartyLobby';
 import BombPartyGame from '../components/bombparty/BombPartyGame';
@@ -35,6 +35,13 @@ const BombParty: React.FC = () => {
   const { profile } = useAuth();
   const [roomState, setRoomState] = useState<RoomState | null>(null);
   const [nickname, setNickname] = useState(profile?.minecraft_username || '');
+
+  // Sync nickname when profile loads asynchronously
+  useEffect(() => {
+    if (profile?.minecraft_username && !nickname) {
+      setNickname(profile.minecraft_username);
+    }
+  }, [profile?.minecraft_username]);
 
   // Wrapper to handle both direct values and updater functions
   const updateRoomState = useCallback((update: RoomState | null | ((prev: RoomState | null) => RoomState | null)) => {

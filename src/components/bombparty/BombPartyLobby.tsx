@@ -123,17 +123,18 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
   }, [setRoomState]);
 
   const createRoom = async () => {
-    if (!nickname.trim()) {
+    if (!nickname.trim() && !isLoggedIn) {
       setError('Inserisci un nickname!');
       return;
     }
+    const finalNickname = nickname.trim() || profile?.minecraft_username || 'Player';
     setLoading(true);
     setError('');
 
     const roomCode = generateRoomCode();
     const player: BombPartyPlayer = {
       id: playerIdRef.current,
-      nickname: nickname.trim(),
+      nickname: finalNickname,
       lives: settings.startLives,
       score: 0,
       isHost: true,
@@ -156,7 +157,7 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
   };
 
   const joinRoom = async () => {
-    if (!nickname.trim()) {
+    if (!nickname.trim() && !isLoggedIn) {
       setError('Inserisci un nickname!');
       return;
     }
@@ -167,10 +168,11 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
     setLoading(true);
     setError('');
 
+    const finalNickname = nickname.trim() || profile?.minecraft_username || 'Player';
     const code = joinCode.trim().toUpperCase();
     const player: BombPartyPlayer = {
       id: playerIdRef.current,
-      nickname: nickname.trim(),
+      nickname: finalNickname,
       lives: DEFAULT_SETTINGS.startLives,
       score: 0,
       isHost: false,
