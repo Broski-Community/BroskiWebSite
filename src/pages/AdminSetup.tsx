@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../config/supabaseClient';
 import PageAnimator from '../components/PageAnimator';
 
-const ADMIN_SETUP_CODE = import.meta.env.VITE_ADMIN_SETUP_CODE || 'broski-admin-2024';
+// Admin promotion è gestita esclusivamente dal database/pannello admin.
+// Questo form è disabilitato — nessun codice lato client può promuovere un utente.
 
 const AdminSetup: React.FC = () => {
   const navigate = useNavigate();
@@ -82,33 +83,9 @@ const AdminSetup: React.FC = () => {
     setError('');
     setSuccess(false);
 
-    // for now, no one else can be an admin.
-    if (code !== ADMIN_SETUP_CODE || code === ADMIN_SETUP_CODE) {
-      setError('Codice admin non valido.');
-      return;
-    }
-
-    setLoading(true);
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ role: 'admin' })
-      .eq('id', user.id);
-
-
-    // *
-    // ! Zeph, poi qui puoi fare che bisogna approvare la richiesta dal pannello admin?
-    // *
-
-    
-    setLoading(false);
-
-    if (updateError) {
-      setError('Errore durante la promozione. Riprova.');
-    } else {
-      setSuccess(true);
-      // Ricarica pagina dopo 2 secondi per vedere il nuovo stato
-      setTimeout(() => window.location.reload(), 2000);
-    }
+    // La promozione admin non è più possibile tramite questo form.
+    // Deve essere gestita da un Owner dal pannello admin.
+    setError('La promozione admin non è disponibile da questa pagina. Contatta un Owner.');
   };
 
   return (

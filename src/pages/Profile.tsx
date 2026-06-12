@@ -1,8 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../config/supabaseClient';
 import ProfileEditor from '../components/ProfileEditor';
+
+// Sanitizzazione HTML — blocca script, iframe, form, event handler
+const sanitizeHTML = (html: string): string =>
+  DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['div', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'a', 'img', 'br', 'hr',
+      'ul', 'ol', 'li', 'strong', 'em', 'b', 'i', 'blockquote', 'pre', 'code', 'table', 'thead',
+      'tbody', 'tr', 'th', 'td', 'section', 'article', 'header', 'footer', 'nav', 'main'],
+    ALLOWED_ATTR: ['class', 'style', 'src', 'href', 'alt', 'target', 'rel', 'id', 'width', 'height', 'loading'],
+    FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'textarea', 'button', 'select'],
+    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onmouseout', 'onfocus', 'onblur'],
+  });
+
+// Sanitizzazione CSS — rimuove url(), expression(), e @import per prevenire CSS exfiltration
+const sanitizeCSS = (css: string): string =>
+  css
+    .replace(/url\s*\([^)]*\)/gi, '')
+    .replace(/expression\s*\([^)]*\)/gi, '')
+    .replace(/@import[^;]*;?/gi, '')
+    .replace(/javascript:/gi, '');
 
 export interface ProfileCustomization {
   id: string;
@@ -128,8 +148,8 @@ const Profile: React.FC = () => {
             MODIFICA CODICE
           </button>
         )}
-        {profileData.custom_css && <style>{`.profile-custom { ${profileData.custom_css} }`}</style>}
-        <div className="profile-custom mx-auto max-w-4xl" dangerouslySetInnerHTML={{ __html: profileData.custom_html }} />
+        {profileData.custom_css && <style>{`.profile-custom { ${sanitizeCSS(profileData.custom_css)} }`}</style>}
+        <div className="profile-custom mx-auto max-w-4xl" dangerouslySetInnerHTML={{ __html: sanitizeHTML(profileData.custom_html) }} />
       </div>
     );
   }
@@ -142,8 +162,8 @@ const Profile: React.FC = () => {
           <span className="material-symbols-outlined text-yellow-400">preview</span>
           <p className="text-sm text-yellow-300">ANTEPRIMA — Questo codice è in attesa di approvazione.</p>
         </div>
-        {profileData.pending_custom_css && <style>{`.profile-custom { ${profileData.pending_custom_css} }`}</style>}
-        <div className="profile-custom mx-auto max-w-4xl" dangerouslySetInnerHTML={{ __html: profileData.pending_custom_html }} />
+        {profileData.pending_custom_css && <style>{`.profile-custom { ${sanitizeCSS(profileData.pending_custom_css)} }`}</style>}
+        <div className="profile-custom mx-auto max-w-4xl" dangerouslySetInnerHTML={{ __html: sanitizeHTML(profileData.pending_custom_html) }} />
       </div>
     );
   }
@@ -313,9 +333,9 @@ const Profile: React.FC = () => {
 
   return (
     <div className="min-h-screen px-4 py-8 sm:px-8" style={pageBgStyle}>
-      {/* Custom CSS injection (sanitized - only color/bg/border/shadow/font properties) */}
+      {/* Custom CSS injection — sanitized */}
       {profileData.custom_css && (
-        <style>{`.profile-card { ${profileData.custom_css} }`}</style>
+        <style>{`.profile-card { ${sanitizeCSS(profileData.custom_css)} }`}</style>
       )}
 
       <div className="mx-auto max-w-3xl">

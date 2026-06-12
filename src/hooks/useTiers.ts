@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../config/supabaseClient';
 
 export type Tier = 'HT1' | 'LT1' | 'HT2' | 'LT2' | 'HT3' | 'LT3' | 'HT4' | 'LT4' | 'HT5' | 'LT5' | 'UNRANKED';
 export type Category = 'SWORD' | 'AXE' | 'MACE' | 'SPEAR MACE' | 'SMP' | 'DIA SMP' | 'CART PVP' | 'VANILLA' | 'NETHOP';

@@ -1,8 +1,29 @@
 import React, { useState } from 'react';
+import DOMPurify from 'dompurify';
 import { supabase } from '../config/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import PageAnimator from './PageAnimator';
 import type { ProfileCustomization } from '../pages/Profile';
+
+// Valida che un iframe Spotify contenga solo URL legittimi
+const extractSpotifySrc = (input: string): string | null => {
+  // Se è già un URL diretto
+  if (/^https:\/\/open\.spotify\.com\/embed\/(track|playlist|album|episode|artist)\/[a-zA-Z0-9]+/.test(input)) {
+    return input;
+  }
+  // Se è un iframe, estrai src
+  const srcMatch = input.match(/src="(https:\/\/open\.spotify\.com\/embed\/[^"]+)"/);
+  if (srcMatch) return srcMatch[1];
+  return null;
+};
+
+// Sanitizza CSS custom per prevenire exfiltration
+const sanitizeCSS = (css: string): string =>
+  css
+    .replace(/url\s*\([^)]*\)/gi, '')
+    .replace(/expression\s*\([^)]*\)/gi, '')
+    .replace(/@import[^;]*;?/gi, '')
+    .replace(/javascript:/gi, '');
 
 const FONTS = [
   { value: 'default', label: 'Default' },
@@ -182,7 +203,7 @@ const ProfileEditor: React.FC<Props> = ({ profileData, onSave, onCancel }) => {
         banner_url: bannerUrl,
         banner_gradient: form.banner_gradient || null,
         card_background: form.card_background || null,
-        spotify_iframe: form.spotify_iframe || null,
+        spotify_iframe: form.spotify_iframe ? (extractSpotifySrc(form.spotify_iframe) ? form.spotify_iframe : null) : null,
         page_bg_color: form.page_bg_color || null,
         page_bg_gradient: form.page_bg_gradient || null,
         text_color: form.text_color,
