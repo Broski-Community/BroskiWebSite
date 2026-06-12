@@ -35,6 +35,7 @@ import CreatorProfile from './pages/CreatorProfile'
 import IdeaSubmit from './pages/IdeaSubmit'
 import MyIdeas from './pages/MyIdeas'
 import Profile from './pages/Profile'
+import BombParty from './pages/BombParty'
 
 function App() {
   return (
@@ -78,6 +79,7 @@ function App() {
                   <Route path="/profilo/:username" element={<Profile />} />
                   <Route path="/admin/setup" element={<RequireAuth><AdminSetup /></RequireAuth>} />
                   <Route path="/admin" element={<RequireAuth><RequireAdmin><AdminPanel /></RequireAdmin></RequireAuth>} />
+                  <Route path="/bomb-party" element={<BombParty />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>
