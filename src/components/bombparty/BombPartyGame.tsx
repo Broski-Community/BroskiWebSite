@@ -405,15 +405,22 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
         >
           <div className="flex flex-col items-center gap-2">
             {/* Immagine bomba con ring colorato */}
-            <div className={`relative flex h-36 w-36 items-center justify-center rounded-full ring-4 ${currentBombEvent.glowColor} sm:h-44 sm:w-44`}>
+            <div className={`relative h-40 w-40 sm:h-52 sm:w-52`}>
               <img
                 src={currentBombEvent.image}
                 alt={currentBombEvent.name}
-                className="absolute h-48 w-48 object-contain sm:h-56 sm:w-56"
-                style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%) translate(0%, -12%)' }}
+                className="h-full w-full object-contain"
               />
-              {/* Sillaba sovrapposta - centrata sul corpo della bomba */}
-              <div className="absolute inset-0 flex items-center justify-center" style={{ transform: 'translateY(4%)' }}>
+              {/* Ring decorativo centrato sul corpo della bomba (50%, 74%) */}
+              <div
+                className={`pointer-events-none absolute h-32 w-32 rounded-full ring-[3px] ${currentBombEvent.glowColor} sm:h-40 sm:w-40`}
+                style={{ top: '74%', left: '50%', transform: 'translate(-50%, -50%)' }}
+              />
+              {/* Sillaba centrata sul corpo della bomba */}
+              <div
+                className="absolute flex items-center justify-center"
+                style={{ top: '74%', left: '50%', transform: 'translate(-50%, -50%)' }}
+              >
                 <span className="font-headline-lg text-[28px] uppercase tracking-wider text-white sm:text-[36px]"
                   style={{ textShadow: '0 0 10px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7)' }}>
                   {roomState.currentSyllable}
