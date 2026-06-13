@@ -12,6 +12,7 @@ export interface BombPartyPlayer {
   lives: number;
   score: number;
   isHost: boolean;
+  hasShield: boolean;        // ⭐ Scudo attivo (salva da 1 esplosione futura)
 }
 
 export interface RoomSettings {

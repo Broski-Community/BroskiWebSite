@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../../config/supabaseClient';
 import { validateWord, getRandomSyllable, loadDictionary, isDictionaryLoaded } from '../../utils/bombPartyDictionary';
-import { BOMB_EVENTS, rollBombEvent, getHardSyllable } from '../../config/bombPartyEvents';
+import { BOMB_EVENTS, rollBombEvent } from '../../config/bombPartyEvents';
+import { saveMatchResult, saveGameState } from '../../utils/bombPartyPersistence';
 import type { RoomState } from '../../pages/BombParty';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
@@ -38,6 +39,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const roomStateRef = useRef(roomState);
+  const gameStartTimeRef = useRef(Date.now());
 
   useEffect(() => { roomStateRef.current = roomState; }, [roomState]);
   useEffect(() => { if (!isDictionaryLoaded()) loadDictionary(); }, []);
@@ -48,7 +50,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
   const currentBombEvent = BOMB_EVENTS[roomState.currentBomb];
 
   // Effective turn time (star bomb = half time)
-  const effectiveTurnTime = roomState.currentBomb === 'star'
+  const effectiveTurnTime = roomState.currentBomb === 'striped'
     ? Math.max(3, Math.floor(roomState.settings.turnTime / 2))
     : roomState.settings.turnTime;
 
@@ -59,7 +61,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
       .on('broadcast', { event: 'game_state_update' }, ({ payload }) => {
         const newState = payload as RoomState;
         setRoomState(newState);
-        const newEffective = newState.currentBomb === 'star'
+        const newEffective = newState.currentBomb === 'striped'
           ? Math.max(3, Math.floor(newState.settings.turnTime / 2))
           : newState.settings.turnTime;
         setTimeLeft(newEffective);
@@ -70,7 +72,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
         const { newState, word } = payload as { newState: RoomState; word: string };
         setRoomState(newState);
         setUsedWords(prev => new Set([...prev, word.toLowerCase()]));
-        const newEffective = newState.currentBomb === 'star'
+        const newEffective = newState.currentBomb === 'striped'
           ? Math.max(3, Math.floor(newState.settings.turnTime / 2))
           : newState.settings.turnTime;
         setTimeLeft(newEffective);
@@ -103,6 +105,12 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
       setRoomState(finishedState);
       if (channelRef.current) {
         channelRef.current.send({ type: 'broadcast', event: 'game_over', payload: finishedState });
+      }
+      // Persistenza: salva risultato
+      const winner = alivePlayers[0];
+      if (winner) {
+        saveMatchResult(finishedState, winner.nickname, gameStartTimeRef.current);
+        saveGameState(finishedState);
       }
     }
   }, [alivePlayers.length, roomState.status, roomState.players.length]);
@@ -166,9 +174,14 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
     const currentP = state.players[state.currentTurnIndex];
     if (currentP?.nickname !== nickname) return;
 
-    const updatedPlayers = state.players.map((p, i) =>
-      i === state.currentTurnIndex ? { ...p, lives: p.lives - 1 } : p
-    );
+    const updatedPlayers = state.players.map((p, i) => {
+      if (i !== state.currentTurnIndex) return p;
+      // Se ha lo scudo, consuma lo scudo invece di perdere vita
+      if (p.hasShield) {
+        return { ...p, hasShield: false };
+      }
+      return { ...p, lives: p.lives - 1 };
+    });
 
     const alive = updatedPlayers.filter(p => p.lives > 0);
     if (alive.length <= 1) {
@@ -193,7 +206,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
     const nextBomb = getNextBomb(updatedPlayers, nextIndex);
     // Per bomba striped usa sillaba difficile
     const newSyllable = shouldChangeSyllable
-      ? (nextBomb === 'striped' ? getHardSyllable() : getRandomSyllable())
+      ? getRandomSyllable()
       : state.currentSyllable;
 
     const newState: RoomState = {
@@ -235,20 +248,35 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
     let updatedPlayers = [...roomState.players];
     let bonusMessage = '';
 
-    // Calcola punti base
-    let points = word.length;
-
     switch (roomState.currentBomb) {
       case 'dollar':
-        // Punti doppi
-        points = word.length * 2;
-        bonusMessage = '💰 PUNTI DOPPI!';
+        // Parola Lunga: devi scrivere 7+ lettere per +1 vita
+        if (word.length >= 7) {
+          updatedPlayers = updatedPlayers.map((p, i) =>
+            i === roomState.currentTurnIndex
+              ? { ...p, lives: Math.min(p.lives + 1, roomState.settings.maxLives), score: p.score + word.length }
+              : p
+          );
+          bonusMessage = '💰 PAROLA LUNGA! +1 vita!';
+        } else {
+          // Parola valida ma troppo corta, niente bonus
+          updatedPlayers = updatedPlayers.map((p, i) =>
+            i === roomState.currentTurnIndex ? { ...p, score: p.score + word.length } : p
+          );
+          bonusMessage = '💰 Parola troppo corta per il bonus! (servono 7+ lettere)';
+        }
         break;
 
       case 'lightning':
-        // Tutti gli avversari perdono una vita
+        // Shock: tutti gli avversari perdono 1 vita (scudo li protegge)
         updatedPlayers = updatedPlayers.map((p, i) => {
-          if (i !== roomState.currentTurnIndex && p.lives > 0) {
+          if (i === roomState.currentTurnIndex) {
+            return { ...p, score: p.score + word.length };
+          }
+          if (p.lives > 0) {
+            if (p.hasShield) {
+              return { ...p, hasShield: false }; // Scudo consumato
+            }
             return { ...p, lives: p.lives - 1 };
           }
           return p;
@@ -257,27 +285,31 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
         break;
 
       case 'striped':
-        // Guadagna una vita extra (max = maxLives)
-        updatedPlayers = updatedPlayers.map((p, i) => {
-          if (i === roomState.currentTurnIndex) {
-            return { ...p, lives: Math.min(p.lives + 1, roomState.settings.maxLives) };
-          }
-          return p;
-        });
-        bonusMessage = '🎯 +1 VITA!';
+        // Timer Bomba: tempo dimezzato (già gestito dal effectiveTurnTime)
+        // Nessun effetto speciale extra sulla parola
+        updatedPlayers = updatedPlayers.map((p, i) =>
+          i === roomState.currentTurnIndex ? { ...p, score: p.score + word.length } : p
+        );
+        bonusMessage = '🎯 Bravo! Hai battuto il timer dimezzato!';
         break;
 
       case 'star':
-        // Punti triplicati
-        points = word.length * 3;
-        bonusMessage = '⭐ PUNTI TRIPLI!';
+        // Scudo: rispondi correttamente per ottenere uno scudo
+        updatedPlayers = updatedPlayers.map((p, i) =>
+          i === roomState.currentTurnIndex
+            ? { ...p, score: p.score + word.length, hasShield: true }
+            : p
+        );
+        bonusMessage = '⭐ SCUDO ATTIVATO! La prossima esplosione non ti farà danno!';
+        break;
+
+      default:
+        // Normale: solo punti
+        updatedPlayers = updatedPlayers.map((p, i) =>
+          i === roomState.currentTurnIndex ? { ...p, score: p.score + word.length } : p
+        );
         break;
     }
-
-    // Applica punti al giocatore corrente
-    updatedPlayers = updatedPlayers.map((p, i) =>
-      i === roomState.currentTurnIndex ? { ...p, score: p.score + points } : p
-    );
 
     // Prossimo giocatore
     const alive = updatedPlayers.filter(p => p.lives > 0);
@@ -298,7 +330,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
 
     // Prossima bomba
     const nextBomb = getNextBomb(updatedPlayers, nextIndex);
-    const newSyllable = nextBomb === 'striped' ? getHardSyllable() : getRandomSyllable();
+    const newSyllable = getRandomSyllable();
 
     const newState: RoomState = {
       ...roomState,
@@ -459,6 +491,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
                   {Array.from({ length: roomState.settings.maxLives }).map((_, i) => (
                     <span key={i} className={`text-[10px] sm:text-[12px] ${i < player.lives ? '' : 'opacity-30'}`}>❤️</span>
                   ))}
+                  {player.hasShield && <span className="text-[10px] sm:text-[12px]">🛡️</span>}
                 </div>
                 <div className={`flex h-12 w-12 items-center justify-center rounded-xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] sm:h-16 sm:w-16 ${
                   isCurrent ? 'bg-primary-container ring-2 ring-green-400' : 'bg-surface-container-high'

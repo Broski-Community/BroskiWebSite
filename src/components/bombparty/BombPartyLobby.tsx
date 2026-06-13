@@ -3,6 +3,7 @@ import { supabase } from '../../config/supabaseClient';
 import { getRandomSyllable, loadDictionary } from '../../utils/bombPartyDictionary';
 import { useAuth } from '../../context/AuthContext';
 import { rollBombEvent } from '../../config/bombPartyEvents';
+import { createRoom as persistCreateRoom } from '../../utils/bombPartyPersistence';
 import type { RoomState, BombPartyPlayer, RoomSettings } from '../../pages/BombParty';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
@@ -140,6 +141,7 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
       lives: settings.startLives,
       score: 0,
       isHost: true,
+      hasShield: false,
     };
 
     const newRoom: RoomState = {
@@ -156,6 +158,7 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
 
     setRoomState(newRoom);
     subscribeToRoom(roomCode, player, settings, true);
+    persistCreateRoom(roomCode, settings);
     setLoading(false);
   };
 
@@ -179,6 +182,7 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
       lives: DEFAULT_SETTINGS.startLives,
       score: 0,
       isHost: false,
+      hasShield: false,
     };
 
     const joinedRoom: RoomState = {
