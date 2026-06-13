@@ -2,6 +2,10 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { validateWord, getRandomSyllable, loadDictionary, isDictionaryLoaded } from '../../utils/bombPartyDictionary';
 import { BOMB_EVENTS, rollBombEvent } from '../../config/bombPartyEvents';
 import { saveMatchResult, saveGameState } from '../../utils/bombPartyPersistence';
+import {
+  unlockAudio, setMuted, isMuted,
+  playTick, playTurnChange, playWord, playError, playExplosion, playGameOver,
+} from '../../utils/bombPartySounds';
 import type { RoomState } from '../../pages/BombParty';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
@@ -48,8 +52,8 @@ const gameStyles = `
     50% { opacity: 0.85; transform: translate(-50%, -50%) scale(1.05); }
   }
   @keyframes bp-syllable-pulse {
-    0%, 100% { transform: translate(-50%, -50%) translate(-9px, -24px) scale(1); }
-    50% { transform: translate(-50%, -50%) translate(-9px, -24px) scale(1.08); }
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.08); }
   }
   @keyframes bp-ring-pulse {
     0% { opacity: 1; transform: scale(1); }
@@ -90,15 +94,47 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
   const [usedWords, setUsedWords] = useState<Set<string>>(new Set());
   const [playerInputs, setPlayerInputs] = useState<Record<string, string>>({});
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [muted, setMutedState] = useState(isMuted());
+  const [arrowRotation, setArrowRotation] = useState(() => {
+    const count = roomState.players.length || 1;
+    return (360 / count) * roomState.currentTurnIndex;
+  });
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const roomStateRef = useRef(roomState);
   const gameStartTimeRef = useRef(Date.now());
+  // Sound/animation bookkeeping
+  const prevTimeRef = useRef(timeLeftInit());
+  const prevTotalLivesRef = useRef(roomState.players.reduce((s, p) => s + p.lives, 0));
+  const prevRoundRef = useRef(roomState.roundNumber);
+  const prevStatusRef = useRef(roomState.status);
+  const arrowPrevIndexRef = useRef(roomState.currentTurnIndex);
+
+  function timeLeftInit() { return roomState.settings.turnTime; }
 
   useEffect(() => { roomStateRef.current = roomState; }, [roomState]);
   useEffect(() => { if (!isDictionaryLoaded()) loadDictionary(); }, []);
+
+  // Unlock audio on first user interaction (browser autoplay policy)
+  useEffect(() => {
+    const unlock = () => unlockAudio();
+    window.addEventListener('pointerdown', unlock, { once: true });
+    window.addEventListener('keydown', unlock, { once: true });
+    return () => {
+      window.removeEventListener('pointerdown', unlock);
+      window.removeEventListener('keydown', unlock);
+    };
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    setMutedState((m) => {
+      const next = !m;
+      setMuted(next);
+      return next;
+    });
+  }, []);
 
   // Fullscreen handling
   useEffect(() => {
@@ -164,6 +200,45 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
     setInput('');
     setPlayerInputs({});
   }, [roomState.currentTurnIndex, roomState.roundNumber, effectiveTurnTime]);
+
+  // SOUND: ticking each second while playing
+  useEffect(() => {
+    if (roomState.status === 'playing' && timeLeft < prevTimeRef.current && timeLeft >= 0) {
+      playTick(timeLeft <= 3);
+    }
+    prevTimeRef.current = timeLeft;
+  }, [timeLeft, roomState.status]);
+
+  // SOUND + ARROW: react to turn / life / status changes
+  useEffect(() => {
+    const totalLives = roomState.players.reduce((s, p) => s + p.lives, 0);
+
+    // Rotate the central arrow forward to the active player
+    const count = roomState.players.length || 1;
+    const prevIdx = arrowPrevIndexRef.current;
+    const steps = (roomState.currentTurnIndex - prevIdx + count) % count;
+    if (steps !== 0) {
+      setArrowRotation((r) => r + steps * (360 / count));
+    }
+    arrowPrevIndexRef.current = roomState.currentTurnIndex;
+
+    // Game over jingle
+    if (roomState.status === 'finished' && prevStatusRef.current !== 'finished') {
+      const winner = roomState.players.filter(p => p.lives > 0)[0];
+      playGameOver(winner?.nickname === nickname);
+    } else if (roomState.roundNumber !== prevRoundRef.current && roomState.status === 'playing') {
+      // Turn advanced: explosion if a life was lost, otherwise a turn-change blip
+      if (totalLives < prevTotalLivesRef.current) {
+        playExplosion();
+      } else {
+        playTurnChange();
+      }
+    }
+
+    prevRoundRef.current = roomState.roundNumber;
+    prevTotalLivesRef.current = totalLives;
+    prevStatusRef.current = roomState.status;
+  }, [roomState.roundNumber, roomState.currentTurnIndex, roomState.status, roomState.players, nickname]);
 
   // Note: winner checking is done inline in handleTimeUp, handleTimeUpFallback, and submitWord
   // to avoid race conditions with early game-over detection.
@@ -329,18 +404,22 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
 
     if (usedWords.has(word)) {
       setFeedback({ message: 'Parola già usata!', type: 'error' });
+      playError();
       return;
     }
     if (!word.includes(roomState.currentSyllable.toLowerCase())) {
       setFeedback({ message: `Deve contenere "${roomState.currentSyllable}"!`, type: 'error' });
+      playError();
       return;
     }
     if (!validateWord(word)) {
       setFeedback({ message: 'Parola non valida!', type: 'error' });
+      playError();
       return;
     }
 
     setUsedWords(prev => new Set([...prev, word]));
+    playWord();
 
     // === APPLY BOMB EFFECTS ===
     let updatedPlayers = [...roomState.players];
@@ -607,6 +686,15 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
           </div>
         )}
         <button
+          onClick={toggleMute}
+          title={muted ? 'Attiva audio' : 'Disattiva audio'}
+          className="flex shrink-0 items-center justify-center rounded-xl border-[3px] border-black bg-surface-container-high px-4 text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 hover:text-primary-container active:translate-x-1 active:translate-y-1 active:shadow-none"
+        >
+          <span className="material-symbols-outlined text-[24px]">
+            {muted ? 'volume_off' : 'volume_up'}
+          </span>
+        </button>
+        <button
           onClick={toggleFullscreen}
           title={isFullscreen ? 'Esci da schermo intero' : 'Schermo intero'}
           className="flex shrink-0 items-center justify-center rounded-xl border-[3px] border-black bg-surface-container-high px-4 text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 hover:text-primary-container active:translate-x-1 active:translate-y-1 active:shadow-none"
@@ -655,12 +743,31 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
               style={{ background: bombGlowColor, animation: 'bp-glow-pulse 1.5s ease-in-out infinite' }}
             />
 
-            {/* Bomb image + syllable */}
+            {/* Rotating pointer that aims at the active player (pivots on bomb center) */}
+            <div
+              className="pointer-events-none absolute left-1/2 top-1/2 z-30 h-0 w-0"
+              style={{ transform: `rotate(${arrowRotation}deg)`, transition: 'transform 0.5s cubic-bezier(0.34,1.56,0.64,1)' }}
+            >
+              <span
+                className="material-symbols-outlined"
+                style={{
+                  position: 'absolute', left: '50%', top: 0,
+                  transform: 'translate(-50%, -134px)',
+                  fontSize: '46px', lineHeight: 1, color: '#22c55e',
+                  fontVariationSettings: "'FILL' 1",
+                  filter: 'drop-shadow(0 0 2px rgba(0,0,0,1)) drop-shadow(0 2px 2px rgba(0,0,0,0.8))',
+                }}
+              >
+                navigation
+              </span>
+            </div>
+
+            {/* Bomb image + syllable (centered on the ring) */}
             <div
               className="relative"
               style={{ animation: `bomb-shake ${Math.max(0.05, 0.5 - shakeIntensity * 0.45)}s infinite` }}
             >
-              <div className="relative h-40 w-40 sm:h-52 sm:w-52" style={{ transform: 'translateX(9px)' }}>
+              <div className="relative h-40 w-40 sm:h-52 sm:w-52">
                 <img
                   src={currentBombEvent.image}
                   alt={currentBombEvent.name}
@@ -668,7 +775,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
                 />
                 <div
                   className="absolute flex items-center justify-center"
-                  style={{ top: '74%', left: '50%', transform: 'translate(-50%, -50%) translate(-9px, -24px)' }}
+                  style={{ left: '50%', top: '54%', transform: 'translate(-50%, -50%)' }}
                 >
                   <span
                     className="font-headline-lg text-[30px] uppercase tracking-wider text-white sm:text-[40px]"
@@ -681,7 +788,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
             </div>
 
             {/* Numeric timer chip */}
-            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2">
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 z-30">
               <span className={`inline-block rounded-full border-[3px] border-black px-3 py-0.5 font-headline-md text-[16px] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${
                 timeLeft <= 2 ? 'bg-red-600 text-white' : timeLeft <= 4 ? 'bg-orange-500 text-white' : 'bg-surface-container-highest text-white'
               }`}>
@@ -735,7 +842,6 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
                     {typingText}
                   </p>
                 )}
-                {isCurrent && !isDead && <span className="text-[16px]" style={{ animation: 'bp-bounce-arrow 0.8s ease-in-out infinite' }}>⬇️</span>}
               </div>
             </div>
           );
