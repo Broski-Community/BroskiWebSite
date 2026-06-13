@@ -63,6 +63,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
       .on('broadcast', { event: 'game_state_update' }, ({ payload }) => {
         const newState = payload as RoomState;
         setRoomState(newState);
+        checkWinner(newState);
         const newEffective = newState.currentBomb === 'striped'
           ? Math.max(3, Math.floor(newState.settings.turnTime / 2))
           : newState.settings.turnTime;
@@ -73,6 +74,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
       .on('broadcast', { event: 'word_accepted' }, ({ payload }) => {
         const { newState, word } = payload as { newState: RoomState; word: string };
         setRoomState(newState);
+        checkWinner(newState);
         setUsedWords(prev => new Set([...prev, word.toLowerCase()]));
         const newEffective = newState.currentBomb === 'striped'
           ? Math.max(3, Math.floor(newState.settings.turnTime / 2))
@@ -98,24 +100,26 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
     return () => { supabase.removeChannel(channel); };
   }, [roomState.roomCode, setRoomState, nickname]);
 
-  // Winner check - only if game has more than 1 player total
-  useEffect(() => {
-    if (roomState.status !== 'playing') return;
-    if (roomState.players.length < 2) return;
-    if (alivePlayers.length === 1) {
-      const finishedState: RoomState = { ...roomState, status: 'finished' };
+  // Winner check - only triggered by explicit game state changes, not on mount
+  // This prevents false game-over from async race conditions
+  const checkWinner = useCallback((state: RoomState) => {
+    if (state.status !== 'playing') return;
+    if (state.players.length < 2) return;
+    const alive = state.players.filter(p => p.lives > 0);
+    if (alive.length === 1) {
+      const finishedState: RoomState = { ...state, status: 'finished' };
       setRoomState(finishedState);
       if (channelRef.current) {
         channelRef.current.send({ type: 'broadcast', event: 'game_over', payload: finishedState });
       }
-      // Persistenza: salva risultato
-      const winner = alivePlayers[0];
+      // Persistenza
+      const winner = alive[0];
       if (winner) {
         saveMatchResult(finishedState, winner.nickname, gameStartTimeRef.current);
         saveGameState(finishedState);
       }
     }
-  }, [alivePlayers.length, roomState.status, roomState.players.length]);
+  }, [setRoomState]);
 
   // Authoritative timer
   useEffect(() => {
@@ -370,6 +374,30 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
     setRoomState(null);
   };
 
+  // Return to lobby (host keeps host status, back to waiting)
+  const returnToLobby = () => {
+    const lobbyState: RoomState = {
+      ...roomState,
+      status: 'waiting',
+      currentTurnIndex: 0,
+      currentSyllable: '',
+      roundNumber: 0,
+      syllableFailCount: 0,
+      currentBomb: 'normal',
+      players: roomState.players.map(p => ({
+        ...p,
+        lives: roomState.settings.startLives,
+        score: 0,
+        hasShield: false,
+        isSpectator: false,
+      })),
+    };
+    if (channelRef.current) {
+      channelRef.current.send({ type: 'broadcast', event: 'game_state_update', payload: lobbyState });
+    }
+    setRoomState(lobbyState);
+  };
+
   // Shake intensity
   const shakeIntensity = effectiveTurnTime > 0
     ? Math.max(0, 1 - timeLeft / effectiveTurnTime)
@@ -408,9 +436,16 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
             ))}
           </div>
         </div>
-        <button onClick={leaveGame} className="w-full rounded-2xl border-[4px] border-black bg-primary-container px-8 py-4 font-headline-md text-[18px] text-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none">
-          TORNA ALLA LOBBY
-        </button>
+        <div className="flex gap-3">
+          {roomState.players.find(p => p.nickname === nickname)?.isHost && (
+            <button onClick={returnToLobby} className="flex-1 rounded-2xl border-[4px] border-black bg-green-600 px-8 py-4 font-headline-md text-[18px] text-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none">
+              🔄 NUOVO ROUND
+            </button>
+          )}
+          <button onClick={leaveGame} className="flex-1 rounded-2xl border-[4px] border-black bg-surface-container-high px-8 py-4 font-headline-md text-[18px] text-on-surface-variant shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none">
+            ESCI
+          </button>
+        </div>
       </div>
     );
   }

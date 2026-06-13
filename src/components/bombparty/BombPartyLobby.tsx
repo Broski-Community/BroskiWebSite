@@ -75,6 +75,18 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
     });
   };
 
+  // Host can update settings and broadcast to all players
+  const updateSettings = (newSettings: RoomSettings) => {
+    setRoomState((prev) => prev ? { ...prev, settings: newSettings } : prev);
+    if (channelRef.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'settings_update',
+        payload: newSettings,
+      });
+    }
+  };
+
   // Subscribe to Presence + Broadcast for real-time player sync
   const subscribeToRoom = useCallback((
     roomCode: string,
@@ -82,7 +94,6 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
     roomSettings: RoomSettings,
     isHost: boolean
   ) => {
-    // Remove old channel if exists
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
     }
@@ -91,20 +102,18 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
       config: { presence: { key: myPlayer.id } },
     });
 
-    // Track presence state to build player list
     channel.on('presence', { event: 'sync' }, () => {
       const presenceState = channel.presenceState();
       const players: BombPartyPlayer[] = [];
 
       Object.values(presenceState).forEach((presences) => {
-        // Each key has an array of presences (usually 1)
         const p = (presences as unknown as { player: BombPartyPlayer }[])[0];
         if (p?.player) {
           players.push(p.player);
         }
       });
 
-      // Sort: host first, then by join order (id)
+      // Sort: host first, then by join order
       players.sort((a, b) => {
         if (a.isHost && !b.isHost) return -1;
         if (!a.isHost && b.isHost) return 1;
@@ -121,25 +130,26 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
           roundNumber: 0,
           settings: roomSettings,
           syllableFailCount: 0,
-      currentBomb: 'normal',
+          currentBomb: 'normal' as const,
         };
-        return { ...base, players };
+        // Only update players in waiting status - during gameplay, players are managed by game logic
+        if (base.status === 'waiting') {
+          return { ...base, players };
+        }
+        return base;
       });
     });
 
-    // Listen for game start broadcast from host
     channel.on('broadcast', { event: 'game_start' }, ({ payload }) => {
       setRoomState(payload as RoomState);
     });
 
-    // Listen for settings update from host
     channel.on('broadcast', { event: 'settings_update' }, ({ payload }) => {
       setRoomState((prev) => prev ? { ...prev, settings: payload as RoomSettings } : prev);
     });
 
     channel.subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
-        // Track this player in presence
         await channel.track({
           player: myPlayer,
           isHost,
@@ -347,27 +357,58 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
           </div>
         </div>
 
-        {/* Room settings display */}
+        {/* Room settings - editable by host */}
         <div className="rounded-[2rem] border-[4px] border-black bg-surface-container p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
           <h3 className="mb-4 font-headline-md text-[18px] text-white">⚙️ Impostazioni</h3>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-xl border-[2px] border-black bg-surface-container-high p-3 text-center">
-              <p className="font-label-caps text-[10px] text-on-surface-variant">⏲ TEMPO</p>
-              <p className="font-headline-md text-[16px] text-white">{roomState.settings.turnTime}s</p>
+          {isHost ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block font-label-caps text-[9px] text-on-surface-variant">⏲ TEMPO</label>
+                  <select value={roomState.settings.turnTime} onChange={(e) => updateSettings({ ...roomState.settings, turnTime: Number(e.target.value) })} className="w-full rounded-lg border-[2px] border-black bg-surface-container-high px-3 py-2 font-body-lg text-[13px] text-white">
+                    <option value={5}>5s</option><option value={8}>8s</option><option value={10}>10s</option><option value={15}>15s</option><option value={20}>20s</option><option value={30}>30s</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block font-label-caps text-[9px] text-on-surface-variant">❤️ VITE</label>
+                  <select value={roomState.settings.startLives} onChange={(e) => updateSettings({ ...roomState.settings, startLives: Number(e.target.value) })} className="w-full rounded-lg border-[2px] border-black bg-surface-container-high px-3 py-2 font-body-lg text-[13px] text-white">
+                    <option value={1}>1</option><option value={2}>2</option><option value={3}>3</option><option value={4}>4</option><option value={5}>5</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block font-label-caps text-[9px] text-on-surface-variant">🔃 ETÀ SILLABA</label>
+                  <select value={roomState.settings.syllableMaxAge} onChange={(e) => updateSettings({ ...roomState.settings, syllableMaxAge: Number(e.target.value) })} className="w-full rounded-lg border-[2px] border-black bg-surface-container-high px-3 py-2 font-body-lg text-[13px] text-white">
+                    <option value={1}>1</option><option value={2}>2</option><option value={3}>3</option><option value={4}>4</option><option value={5}>5</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block font-label-caps text-[9px] text-on-surface-variant">👥 MAX</label>
+                  <select value={roomState.settings.maxPlayers} onChange={(e) => updateSettings({ ...roomState.settings, maxPlayers: Number(e.target.value) })} className="w-full rounded-lg border-[2px] border-black bg-surface-container-high px-3 py-2 font-body-lg text-[13px] text-white">
+                    <option value={2}>2</option><option value={4}>4</option><option value={6}>6</option><option value={8}>8</option><option value={10}>10</option><option value={16}>16</option>
+                  </select>
+                </div>
+              </div>
             </div>
-            <div className="rounded-xl border-[2px] border-black bg-surface-container-high p-3 text-center">
-              <p className="font-label-caps text-[10px] text-on-surface-variant">❤️ VITE</p>
-              <p className="font-headline-md text-[16px] text-white">{roomState.settings.startLives}</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="rounded-xl border-[2px] border-black bg-surface-container-high p-3 text-center">
+                <p className="font-label-caps text-[10px] text-on-surface-variant">⏲ TEMPO</p>
+                <p className="font-headline-md text-[16px] text-white">{roomState.settings.turnTime}s</p>
+              </div>
+              <div className="rounded-xl border-[2px] border-black bg-surface-container-high p-3 text-center">
+                <p className="font-label-caps text-[10px] text-on-surface-variant">❤️ VITE</p>
+                <p className="font-headline-md text-[16px] text-white">{roomState.settings.startLives}</p>
+              </div>
+              <div className="rounded-xl border-[2px] border-black bg-surface-container-high p-3 text-center">
+                <p className="font-label-caps text-[10px] text-on-surface-variant">🔃 ETÀ SILLABA</p>
+                <p className="font-headline-md text-[16px] text-white">{roomState.settings.syllableMaxAge}</p>
+              </div>
+              <div className="rounded-xl border-[2px] border-black bg-surface-container-high p-3 text-center">
+                <p className="font-label-caps text-[10px] text-on-surface-variant">👥 MAX</p>
+                <p className="font-headline-md text-[16px] text-white">{roomState.settings.maxPlayers}</p>
+              </div>
             </div>
-            <div className="rounded-xl border-[2px] border-black bg-surface-container-high p-3 text-center">
-              <p className="font-label-caps text-[10px] text-on-surface-variant">🔃 ETÀ SILLABA</p>
-              <p className="font-headline-md text-[16px] text-white">{roomState.settings.syllableMaxAge}</p>
-            </div>
-            <div className="rounded-xl border-[2px] border-black bg-surface-container-high p-3 text-center">
-              <p className="font-label-caps text-[10px] text-on-surface-variant">👥 MAX</p>
-              <p className="font-headline-md text-[16px] text-white">{roomState.settings.maxPlayers}</p>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Start button (host only) */}
