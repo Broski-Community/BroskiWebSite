@@ -12,7 +12,9 @@ export interface BombPartyPlayer {
   lives: number;
   score: number;
   isHost: boolean;
-  hasShield: boolean;        // ⭐ Scudo attivo (salva da 1 esplosione futura)
+  hasShield: boolean;
+  avatarUrl?: string;        // URL immagine profilo (skin Minecraft head)
+  isSpectator?: boolean;     // Spettatore (entrato a partita in corso)
 }
 
 export interface RoomSettings {

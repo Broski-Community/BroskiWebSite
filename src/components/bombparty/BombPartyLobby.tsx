@@ -134,6 +134,8 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
     setLoading(true);
     setError('');
 
+    const avatarUrl = finalNickname ? `https://mc-heads.net/avatar/${finalNickname}/64` : undefined;
+
     const roomCode = generateRoomCode();
     const player: BombPartyPlayer = {
       id: playerIdRef.current,
@@ -142,6 +144,7 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
       score: 0,
       isHost: true,
       hasShield: false,
+      avatarUrl,
     };
 
     const newRoom: RoomState = {
@@ -176,23 +179,45 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
 
     const finalNickname = nickname.trim() || profile?.minecraft_username || 'Player';
     const code = joinCode.trim().toUpperCase();
+    const avatarUrl = finalNickname ? `https://mc-heads.net/avatar/${finalNickname}/64` : undefined;
+
+    // Verifica che la stanza esista nel database
+    const { data: roomData } = await supabase
+      .from('bomb_party_rooms')
+      .select('status, settings')
+      .eq('room_code', code)
+      .single();
+
+    if (!roomData) {
+      setError('Stanza non trovata! Controlla il codice.');
+      setLoading(false);
+      return;
+    }
+
+    // Se la partita è già in corso, entra come spettatore
+    const isSpectator = roomData.status === 'playing';
+
     const player: BombPartyPlayer = {
       id: playerIdRef.current,
       nickname: finalNickname,
-      lives: DEFAULT_SETTINGS.startLives,
+      lives: isSpectator ? 0 : DEFAULT_SETTINGS.startLives,
       score: 0,
       isHost: false,
       hasShield: false,
+      avatarUrl,
+      isSpectator,
     };
+
+    const roomSettings = (roomData.settings as RoomSettings) || DEFAULT_SETTINGS;
 
     const joinedRoom: RoomState = {
       roomCode: code,
       players: [player],
-      status: 'waiting',
+      status: roomData.status as RoomState['status'],
       currentTurnIndex: 0,
       currentSyllable: '',
       roundNumber: 0,
-      settings: DEFAULT_SETTINGS,
+      settings: roomSettings,
       syllableFailCount: 0,
       currentBomb: 'normal',
     };

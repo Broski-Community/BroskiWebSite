@@ -48,6 +48,8 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
   const isMyTurn = currentPlayer?.nickname === nickname;
   const alivePlayers = roomState.players.filter(p => p.lives > 0);
   const currentBombEvent = BOMB_EVENTS[roomState.currentBomb];
+  const mePlayer = roomState.players.find(p => p.nickname === nickname);
+  const isSpectator = mePlayer?.isSpectator || false;
 
   // Effective turn time (star bomb = half time)
   const effectiveTurnTime = roomState.currentBomb === 'striped'
@@ -391,13 +393,17 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
             Vincitore: {winner.nickname}
           </p>
           <div className="mt-6 space-y-2">
-            {[...roomState.players].sort((a, b) => b.score - a.score).map((p, i) => (
+            {[...roomState.players].sort((a, b) => b.lives - a.lives || b.score - a.score).map((p, i) => (
               <div key={p.id} className="flex items-center justify-between rounded-xl border-[3px] border-black bg-surface-container-high p-3 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                 <div className="flex items-center gap-3">
                   <span className="font-headline-md text-[18px] text-on-surface-variant">#{i + 1}</span>
+                  {p.avatarUrl && <img src={p.avatarUrl} alt="" className="h-6 w-6 rounded" />}
                   <span className="font-headline-md text-[14px] text-white">{p.nickname}</span>
                 </div>
-                <span className="font-headline-md text-[14px] text-primary-container">{p.score} pts</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[12px]">{p.lives > 0 ? '👑' : '💀'}</span>
+                  <span className="font-headline-md text-[13px] text-on-surface-variant">{p.score} parole</span>
+                </div>
               </div>
             ))}
           </div>
@@ -496,7 +502,11 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
                 <div className={`flex h-12 w-12 items-center justify-center rounded-xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] sm:h-16 sm:w-16 ${
                   isCurrent ? 'bg-primary-container ring-2 ring-green-400' : 'bg-surface-container-high'
                 }`}>
-                  <span className="material-symbols-outlined text-[24px] text-white sm:text-[32px]">person</span>
+                  {player.avatarUrl ? (
+                    <img src={player.avatarUrl} alt={player.nickname} className="h-full w-full rounded-lg object-cover" />
+                  ) : (
+                    <span className="material-symbols-outlined text-[24px] text-white sm:text-[32px]">person</span>
+                  )}
                 </div>
                 {isCurrent && typingText && (
                   <p className="mt-1 max-w-[100px] truncate rounded-lg border-[2px] border-black bg-surface-container-highest px-2 py-0.5 text-center font-headline-md text-[11px] text-primary-container shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:text-[13px]">
@@ -512,28 +522,34 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
 
       {/* Input */}
       <div className="rounded-[2rem] border-[4px] border-black bg-surface-container p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] sm:p-6">
-        <div className="flex gap-3">
-          <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            disabled={!isMyTurn}
-            placeholder={isMyTurn ? `Scrivi una parola con "${roomState.currentSyllable}"...` : 'Aspetta il tuo turno...'}
-            className="flex-1 rounded-xl border-[3px] border-black bg-surface-container-high px-4 py-3 font-headline-md text-[16px] text-white placeholder:text-on-surface-variant/50 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:outline-none focus:ring-2 focus:ring-primary-container disabled:opacity-50 sm:text-[18px]"
-            autoComplete="off"
-            autoCapitalize="off"
-            spellCheck={false}
-          />
-          <button
-            onClick={submitWord}
-            disabled={!isMyTurn || !input.trim()}
-            className="rounded-xl border-[3px] border-black bg-green-600 px-5 py-3 font-headline-md text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none disabled:opacity-50"
-          >
-            <span className="material-symbols-outlined text-[24px]">send</span>
-          </button>
-        </div>
+        {isSpectator ? (
+          <p className="text-center font-headline-md text-[14px] text-on-surface-variant">
+            👀 Stai guardando la partita come spettatore. Potrai giocare al prossimo round!
+          </p>
+        ) : (
+          <div className="flex gap-3">
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              disabled={!isMyTurn}
+              placeholder={isMyTurn ? `Scrivi una parola con "${roomState.currentSyllable}"...` : 'Aspetta il tuo turno...'}
+              className="flex-1 rounded-xl border-[3px] border-black bg-surface-container-high px-4 py-3 font-headline-md text-[16px] text-white placeholder:text-on-surface-variant/50 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:outline-none focus:ring-2 focus:ring-primary-container disabled:opacity-50 sm:text-[18px]"
+              autoComplete="off"
+              autoCapitalize="off"
+              spellCheck={false}
+            />
+            <button
+              onClick={submitWord}
+              disabled={!isMyTurn || !input.trim()}
+              className="rounded-xl border-[3px] border-black bg-green-600 px-5 py-3 font-headline-md text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none disabled:opacity-50"
+            >
+              <span className="material-symbols-outlined text-[24px]">send</span>
+            </button>
+          </div>
+        )}
         {feedback.message && (
           <p className={`mt-2 text-center font-body-lg text-[14px] ${
             feedback.type === 'success' ? 'text-green-400' :
