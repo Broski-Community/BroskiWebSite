@@ -756,7 +756,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
                 className="material-symbols-outlined"
                 style={{
                   position: 'absolute', left: '50%', top: 0,
-                  transform: 'translate(-50%, -160px)',
+                  transform: 'translate(-50%, -190px)',
                   fontSize: '40px', lineHeight: 1, color: '#22c55e',
                   fontVariationSettings: "'FILL' 1",
                   filter: 'drop-shadow(0 0 2px rgba(0,0,0,1)) drop-shadow(0 2px 2px rgba(0,0,0,0.8))',
