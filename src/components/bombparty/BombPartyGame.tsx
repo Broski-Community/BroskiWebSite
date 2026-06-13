@@ -35,6 +35,53 @@ function getPlayerPositions(count: number): { top: string; left: string }[] {
 // any other client can fire handleTimeUp after this extra delay (ms)
 const FALLBACK_TIMER_EXTRA_MS = 5000;
 
+// Shared keyframes/styles for the game (neobrutalism-friendly)
+const gameStyles = `
+  @keyframes bomb-shake {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(3deg) translate(1px, 0); }
+    50% { transform: rotate(0deg); }
+    75% { transform: rotate(-3deg) translate(-1px, 0); }
+  }
+  @keyframes bp-glow-pulse {
+    0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.95); }
+    50% { opacity: 0.85; transform: translate(-50%, -50%) scale(1.05); }
+  }
+  @keyframes bp-syllable-pulse {
+    0%, 100% { transform: translate(-50%, -50%) translate(-9px, -24px) scale(1); }
+    50% { transform: translate(-50%, -50%) translate(-9px, -24px) scale(1.08); }
+  }
+  @keyframes bp-ring-pulse {
+    0% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.35); }
+  }
+  @keyframes bp-bounce-arrow {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+  @keyframes bp-heartbeat {
+    0%, 100% { transform: scale(1); }
+    30% { transform: scale(1.35); }
+    50% { transform: scale(1.1); }
+  }
+  @keyframes bp-pop-in {
+    0% { opacity: 0; transform: scale(0.7); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  @keyframes bp-banner-in {
+    0% { opacity: 0; transform: translateY(-8px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes bp-danger-pulse {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 1; }
+  }
+  @keyframes bp-trophy-pop {
+    0% { opacity: 0; transform: scale(0.3) rotate(-15deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  }
+`;
+
 const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, channel, playerId: _playerId, onLeave }) => {
   void _playerId; // kept for future use (e.g. player-specific logic)
   const [input, setInput] = useState('');
@@ -42,7 +89,9 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
   const [timeLeft, setTimeLeft] = useState(roomState.settings.turnTime);
   const [usedWords, setUsedWords] = useState<Set<string>>(new Set());
   const [playerInputs, setPlayerInputs] = useState<Record<string, string>>({});
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const roomStateRef = useRef(roomState);
@@ -50,6 +99,23 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
 
   useEffect(() => { roomStateRef.current = roomState; }, [roomState]);
   useEffect(() => { if (!isDictionaryLoaded()) loadDictionary(); }, []);
+
+  // Fullscreen handling
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (!document.fullscreenElement) {
+      el.requestFullscreen?.().catch(() => {});
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+    }
+  }, []);
 
   const currentPlayer = roomState.players[roomState.currentTurnIndex];
   const isMyTurn = currentPlayer?.nickname === nickname;
@@ -63,9 +129,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
     ? Math.max(3, Math.floor(roomState.settings.turnTime / 2))
     : roomState.settings.turnTime;
 
-  // Listen to broadcast events on the unified channel
-  // The channel is managed by BombParty.tsx, but we need to listen for typing
-  // and handle word_accepted feedback locally
+  // Listen to broadcast events on the unified channel for local-only UI updates
   useEffect(() => {
     if (!channel) return;
 
@@ -76,7 +140,6 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
       }
     });
 
-    // Listen for word_accepted to update usedWords set locally
     channel.on('broadcast', { event: 'word_accepted' }, ({ payload }) => {
       const { word } = payload as { newState: RoomState; word: string };
       setUsedWords(prev => new Set([...prev, word.toLowerCase()]));
@@ -85,17 +148,13 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
       setFeedback({ message: '', type: '' });
     });
 
-    // On game_state_update, reset input/timer display
     channel.on('broadcast', { event: 'game_state_update' }, () => {
       setInput('');
       setPlayerInputs({});
     });
 
-    // We don't unsubscribe individual listeners in Supabase SDK —
-    // the channel lifecycle is managed by BombParty.tsx
     return () => {
-      // Supabase doesn't support removing individual broadcast listeners,
-      // but the channel will be cleaned up when leaving the room entirely.
+      // Channel lifecycle is managed by BombParty.tsx
     };
   }, [channel, nickname]);
 
@@ -137,10 +196,9 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
     return () => clearInterval(visualTimer);
   }, [roomState.currentTurnIndex, roomState.roundNumber, roomState.status, isMyTurn]);
 
-  // FALLBACK TIMER: if the current turn player disconnects, exactly ONE other client
-  // must fire the time-up. We designate the "fallback authority" as the lowest-index
-  // alive player that is NOT the current turn player. This prevents multiple clients
-  // from broadcasting divergent states simultaneously.
+  // FALLBACK TIMER: exactly ONE designated client fires the time-up if the
+  // active player disconnects. Authority = lowest-index alive non-spectator
+  // player that is NOT the current turn player.
   const fallbackAuthorityNickname = (() => {
     const candidate = roomState.players.find(
       (p, i) => p.lives > 0 && !p.isSpectator && i !== roomState.currentTurnIndex
@@ -150,8 +208,6 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
   const isFallbackAuthority = fallbackAuthorityNickname === nickname;
 
   useEffect(() => {
-    // Only the designated fallback authority arms the fallback timer, and only
-    // when it's NOT their own turn.
     if (roomState.status !== 'playing' || isMyTurn || !isFallbackAuthority) {
       if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
       return;
@@ -159,12 +215,10 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
 
     if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
 
-    // Set fallback to fire after effectiveTurnTime + grace period
     const totalMs = (effectiveTurnTime * 1000) + FALLBACK_TIMER_EXTRA_MS;
     const capturedTurn = { turnIndex: roomState.currentTurnIndex, round: roomState.roundNumber };
 
     fallbackTimerRef.current = setTimeout(() => {
-      // Only fire if the turn hasn't changed (meaning the active player never responded)
       const current = roomStateRef.current;
       if (
         current.currentTurnIndex === capturedTurn.turnIndex &&
@@ -202,12 +256,8 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
     return rollBombEvent(canLightning);
   }, []);
 
-  // handleTimeUp: called by the authoritative timer (current turn player's client)
-  const handleTimeUp = useCallback(async () => {
-    const state = roomStateRef.current;
-    const currentP = state.players[state.currentTurnIndex];
-    if (currentP?.nickname !== nickname) return;
-
+  // Shared logic for advancing the turn after a time-up (life loss)
+  const advanceAfterTimeout = useCallback(async (state: RoomState) => {
     const updatedPlayers = state.players.map((p, i) => {
       if (i !== state.currentTurnIndex) return p;
       if (p.hasShield) return { ...p, hasShield: false };
@@ -255,61 +305,23 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
     }
     setRoomState(newState);
     saveGameState(newState);
-  }, [nickname, setRoomState, getNextBomb, channel]);
+  }, [channel, getNextBomb, setRoomState]);
 
-  // handleTimeUpFallback: called by any NON-active client when the active player
-  // appears to have disconnected (timer expired + 5s grace with no state change)
+  // handleTimeUp: called by the authoritative timer (current turn player's client)
+  const handleTimeUp = useCallback(async () => {
+    const state = roomStateRef.current;
+    const currentP = state.players[state.currentTurnIndex];
+    if (currentP?.nickname !== nickname) return;
+    await advanceAfterTimeout(state);
+  }, [nickname, advanceAfterTimeout]);
+
+  // handleTimeUpFallback: called by the fallback authority when the active player
+  // appears to have disconnected (timer expired + grace period with no state change)
   const handleTimeUpFallback = useCallback(async () => {
     const state = roomStateRef.current;
     if (state.status !== 'playing') return;
-
-    const updatedPlayers = state.players.map((p, i) => {
-      if (i !== state.currentTurnIndex) return p;
-      if (p.hasShield) return { ...p, hasShield: false };
-      return { ...p, lives: p.lives - 1 };
-    });
-
-    const alive = updatedPlayers.filter(p => p.lives > 0);
-    if (alive.length <= 1) {
-      const finishedState: RoomState = { ...state, players: updatedPlayers, status: 'finished' };
-      if (channel) {
-        await channel.send({ type: 'broadcast', event: 'game_over', payload: finishedState });
-      }
-      setRoomState(finishedState);
-      const winner = alive[0];
-      if (winner) {
-        saveMatchResult(finishedState, winner.nickname, gameStartTimeRef.current);
-        saveGameState(finishedState);
-      }
-      return;
-    }
-
-    let nextIndex = (state.currentTurnIndex + 1) % updatedPlayers.length;
-    while (updatedPlayers[nextIndex].lives <= 0) {
-      nextIndex = (nextIndex + 1) % updatedPlayers.length;
-    }
-
-    const newFailCount = state.syllableFailCount + 1;
-    const shouldChangeSyllable = newFailCount >= state.settings.syllableMaxAge;
-    const nextBomb = getNextBomb(updatedPlayers, nextIndex);
-    const newSyllable = shouldChangeSyllable ? getRandomSyllable() : state.currentSyllable;
-
-    const newState: RoomState = {
-      ...state,
-      players: updatedPlayers,
-      currentTurnIndex: nextIndex,
-      currentSyllable: newSyllable,
-      roundNumber: state.roundNumber + 1,
-      syllableFailCount: shouldChangeSyllable ? 0 : newFailCount,
-      currentBomb: nextBomb,
-    };
-
-    if (channel) {
-      await channel.send({ type: 'broadcast', event: 'game_state_update', payload: newState });
-    }
-    setRoomState(newState);
-    saveGameState(newState);
-  }, [setRoomState, getNextBomb, channel]);
+    await advanceAfterTimeout(state);
+  }, [advanceAfterTimeout]);
 
   const submitWord = async () => {
     if (!isMyTurn || !input.trim()) return;
@@ -469,44 +481,74 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
       await channel.send({ type: 'broadcast', event: 'return_to_lobby', payload: lobbyState });
     }
     setRoomState(lobbyState);
-    // Update DB status back to waiting
     saveGameState(lobbyState);
   };
 
-  // Shake intensity
+  // Shake intensity (bomb shakes faster as time runs out)
   const shakeIntensity = effectiveTurnTime > 0
     ? Math.max(0, 1 - timeLeft / effectiveTurnTime)
     : 0;
 
   const positions = getPlayerPositions(roomState.players.length);
+  const isDanger = timeLeft <= 3 && roomState.status === 'playing';
+
+  // Circular timer ring geometry
+  const RING_RADIUS = 140;
+  const RING_CIRC = 2 * Math.PI * RING_RADIUS;
+  const ringProgress = Math.max(0, Math.min(1, timeLeft / effectiveTurnTime));
+  const ringColor = timeLeft <= 2 ? '#dc2626' : timeLeft <= 4 ? '#f97316' : '#22c55e';
+
+  const bombGlowColor =
+    roomState.currentBomb === 'dollar' ? 'rgba(34,197,94,0.55)' :
+    roomState.currentBomb === 'lightning' ? 'rgba(168,85,247,0.55)' :
+    roomState.currentBomb === 'striped' ? 'rgba(249,115,22,0.55)' :
+    roomState.currentBomb === 'star' ? 'rgba(59,130,246,0.55)' :
+    'rgba(239,68,68,0.4)';
 
   // Game Over screen
   if (roomState.status === 'finished') {
     const winner = alivePlayers[0] || roomState.players.reduce((a, b) => a.score > b.score ? a : b);
     const isWinner = winner.nickname === nickname;
     const amIHost = roomState.players.find(p => p.nickname === nickname)?.isHost;
+    const ranked = [...roomState.players].sort((a, b) => b.lives - a.lives || b.score - a.score);
 
     return (
       <div className="space-y-6">
-        <div className="rounded-[2rem] border-[4px] border-black bg-surface-container p-10 text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-          <div className="text-[64px]">{isWinner ? '🏆' : '💀'}</div>
-          <h2 className="mt-4 font-headline-lg text-[36px] text-white">
-            {isWinner ? 'HAI VINTO!' : 'GAME OVER'}
-          </h2>
-          <p className="mt-2 font-headline-md text-[20px] text-primary-container">
-            Vincitore: {winner.nickname}
-          </p>
-          <div className="mt-6 space-y-2">
-            {[...roomState.players].sort((a, b) => b.lives - a.lives || b.score - a.score).map((p, i) => (
-              <div key={p.id} className="flex items-center justify-between rounded-xl border-[3px] border-black bg-surface-container-high p-3 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+        <div className="relative overflow-hidden rounded-[2rem] border-[4px] border-black bg-surface-container p-10 text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <div
+            className="pointer-events-none absolute left-1/2 top-0 h-64 w-64 -translate-x-1/2 rounded-full blur-3xl"
+            style={{ background: isWinner ? 'rgba(34,197,94,0.35)' : 'rgba(239,68,68,0.25)' }}
+          />
+          <div className="relative">
+            <div className="text-[72px]" style={{ animation: 'bp-trophy-pop 0.6s cubic-bezier(0.34,1.56,0.64,1)' }}>
+              {isWinner ? '🏆' : '💀'}
+            </div>
+            <h2 className="mt-2 font-headline-lg text-[40px] text-white drop-shadow-[3px_3px_0px_rgba(0,0,0,1)]">
+              {isWinner ? 'HAI VINTO!' : 'GAME OVER'}
+            </h2>
+            <div className="mt-3 inline-flex items-center gap-2 rounded-xl border-[3px] border-black bg-primary-container px-4 py-1.5 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+              <span className="text-[18px]">👑</span>
+              <p className="font-headline-md text-[18px] text-white">{winner.nickname}</p>
+            </div>
+          </div>
+          <div className="relative mt-6 space-y-2">
+            {ranked.map((p, i) => (
+              <div
+                key={p.id}
+                className={`flex items-center justify-between rounded-xl border-[3px] border-black p-3 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] ${
+                  i === 0 ? 'bg-yellow-500/20' : 'bg-surface-container-high'
+                }`}
+              >
                 <div className="flex items-center gap-3">
-                  <span className="font-headline-md text-[18px] text-on-surface-variant">#{i + 1}</span>
-                  {p.avatarUrl && <img src={p.avatarUrl} alt="" className="h-6 w-6 rounded" />}
+                  <span className={`flex h-7 w-7 items-center justify-center rounded-lg border-[2px] border-black font-headline-md text-[14px] ${
+                    i === 0 ? 'bg-yellow-400 text-black' : i === 1 ? 'bg-gray-300 text-black' : i === 2 ? 'bg-orange-700 text-white' : 'bg-surface-container-highest text-on-surface-variant'
+                  }`}>{i + 1}</span>
+                  {p.avatarUrl && <img src={p.avatarUrl} alt="" className="h-7 w-7 rounded border-[2px] border-black" />}
                   <span className="font-headline-md text-[14px] text-white">{p.nickname}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[12px]">{p.lives > 0 ? '👑' : '💀'}</span>
-                  <span className="font-headline-md text-[13px] text-on-surface-variant">{p.score} parole</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-[14px]">{p.lives > 0 ? '👑' : '💀'}</span>
+                  <span className="rounded-lg border-[2px] border-black bg-surface-container-lowest px-2 py-0.5 font-headline-md text-[12px] text-on-surface-variant">{p.score} 📝</span>
                 </div>
               </div>
             ))}
@@ -522,66 +564,126 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
             ESCI
           </button>
         </div>
+        <style>{gameStyles}</style>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {/* Event banner */}
-      {roomState.currentBomb !== 'normal' && (
-        <div className={`rounded-xl border-[3px] border-black p-3 text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${
-          roomState.currentBomb === 'dollar' ? 'bg-green-900/50' :
-          roomState.currentBomb === 'lightning' ? 'bg-purple-900/50' :
-          roomState.currentBomb === 'striped' ? 'bg-orange-900/50' :
-          'bg-blue-900/50'
-        }`}>
-          <p className="font-headline-md text-[14px] text-white">
-            {currentBombEvent.description}
-          </p>
-        </div>
+    <div
+      ref={containerRef}
+      className={
+        isFullscreen
+          ? 'relative flex h-screen w-screen flex-col items-center justify-center gap-3 overflow-hidden bg-surface-container-lowest p-3'
+          : 'space-y-4'
+      }
+    >
+      {/* Fullscreen dot-grid backdrop */}
+      {isFullscreen && (
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.05) 2px, transparent 2px)', backgroundSize: '28px 28px' }}
+        />
       )}
 
-      {/* Arena */}
-      <div className="relative mx-auto aspect-square w-full max-w-[700px] rounded-[2rem] border-[4px] border-black bg-surface-container shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-
-        {/* Bomb center */}
-        <div
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-          style={{
-            animation: `bomb-shake ${Math.max(0.05, 0.5 - shakeIntensity * 0.45)}s infinite`,
-          }}
+      {/* Top bar: event banner + fullscreen toggle */}
+      <div className={`relative z-10 flex w-full items-stretch gap-2 ${isFullscreen ? 'max-w-[900px]' : ''}`}>
+        {roomState.currentBomb !== 'normal' ? (
+          <div className={`flex flex-1 items-center justify-center rounded-xl border-[3px] border-black p-3 text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${
+            roomState.currentBomb === 'dollar' ? 'bg-green-900/50' :
+            roomState.currentBomb === 'lightning' ? 'bg-purple-900/50' :
+            roomState.currentBomb === 'striped' ? 'bg-orange-900/50' :
+            'bg-blue-900/50'
+          }`} style={{ animation: 'bp-banner-in 0.4s ease-out' }}>
+            <p className="font-headline-md text-[13px] text-white sm:text-[14px]">
+              {currentBombEvent.description}
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-1 items-center justify-center rounded-xl border-[3px] border-black bg-surface-container-high p-3 text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <p className="font-headline-md text-[13px] text-on-surface-variant sm:text-[14px]">
+              💣 Round {roomState.roundNumber} — Sillaba: <span className="text-primary-container">{roomState.currentSyllable}</span>
+            </p>
+          </div>
+        )}
+        <button
+          onClick={toggleFullscreen}
+          title={isFullscreen ? 'Esci da schermo intero' : 'Schermo intero'}
+          className="flex shrink-0 items-center justify-center rounded-xl border-[3px] border-black bg-surface-container-high px-4 text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 hover:text-primary-container active:translate-x-1 active:translate-y-1 active:shadow-none"
         >
-          <div className="flex flex-col items-center gap-2">
-            <div className={`relative h-40 w-40 sm:h-52 sm:w-52`} style={{ transform: 'translateX(9px)' }}>
-              <img
-                src={currentBombEvent.image}
-                alt={currentBombEvent.name}
-                className="h-full w-full object-contain"
+          <span className="material-symbols-outlined text-[24px]">
+            {isFullscreen ? 'fullscreen_exit' : 'fullscreen'}
+          </span>
+        </button>
+      </div>
+
+      {/* Arena */}
+      <div
+        className={`relative z-10 mx-auto aspect-square w-full rounded-[2rem] border-[4px] border-black bg-surface-container shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] ${
+          isFullscreen ? '' : 'max-w-[700px]'
+        }`}
+        style={isFullscreen ? { width: 'min(90vw, calc(100vh - 200px))' } : undefined}
+      >
+        {/* Danger vignette */}
+        <div
+          className="pointer-events-none absolute inset-0 rounded-[1.7rem] transition-opacity duration-300"
+          style={{
+            opacity: isDanger ? 1 : 0,
+            boxShadow: 'inset 0 0 80px 20px rgba(220,38,38,0.45)',
+            animation: isDanger ? 'bp-danger-pulse 0.8s ease-in-out infinite' : undefined,
+          }}
+        />
+
+        {/* Bomb center with circular timer ring */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="relative flex h-[300px] w-[300px] items-center justify-center sm:h-[340px] sm:w-[340px]">
+            {/* SVG circular timer ring */}
+            <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 320 320">
+              <circle cx="160" cy="160" r={RING_RADIUS} fill="none" stroke="rgba(0,0,0,0.45)" strokeWidth="14" />
+              <circle
+                cx="160" cy="160" r={RING_RADIUS} fill="none"
+                stroke={ringColor} strokeWidth="14" strokeLinecap="round"
+                strokeDasharray={RING_CIRC}
+                strokeDashoffset={RING_CIRC * (1 - ringProgress)}
+                style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.3s', filter: `drop-shadow(0 0 6px ${ringColor})` }}
               />
-              <div
-                className="absolute flex items-center justify-center"
-                style={{ top: '74%', left: '50%', transform: 'translate(-50%, -50%) translate(-9px, -24px)' }}
-              >
-                <span className="font-headline-lg text-[28px] uppercase tracking-wider text-white sm:text-[36px]"
-                  style={{ textShadow: '0 0 10px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7)' }}>
-                  {roomState.currentSyllable}
-                </span>
+            </svg>
+
+            {/* Pulsing glow behind bomb */}
+            <div
+              className="pointer-events-none absolute left-1/2 top-1/2 h-44 w-44 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl sm:h-52 sm:w-52"
+              style={{ background: bombGlowColor, animation: 'bp-glow-pulse 1.5s ease-in-out infinite' }}
+            />
+
+            {/* Bomb image + syllable */}
+            <div
+              className="relative"
+              style={{ animation: `bomb-shake ${Math.max(0.05, 0.5 - shakeIntensity * 0.45)}s infinite` }}
+            >
+              <div className="relative h-40 w-40 sm:h-52 sm:w-52" style={{ transform: 'translateX(9px)' }}>
+                <img
+                  src={currentBombEvent.image}
+                  alt={currentBombEvent.name}
+                  className="h-full w-full object-contain drop-shadow-[0_8px_8px_rgba(0,0,0,0.5)]"
+                />
+                <div
+                  className="absolute flex items-center justify-center"
+                  style={{ top: '74%', left: '50%', transform: 'translate(-50%, -50%) translate(-9px, -24px)' }}
+                >
+                  <span
+                    className="font-headline-lg text-[30px] uppercase tracking-wider text-white sm:text-[40px]"
+                    style={{ textShadow: '0 0 10px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7)', animation: 'bp-syllable-pulse 1.2s ease-in-out infinite' }}
+                  >
+                    {roomState.currentSyllable}
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Timer */}
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-24 overflow-hidden rounded-full border-[2px] border-black bg-surface-container-high">
-                <div
-                  className={`h-full rounded-full transition-all duration-1000 ease-linear ${
-                    timeLeft <= 2 ? 'bg-red-600' : timeLeft <= 4 ? 'bg-orange-500' : 'bg-green-500'
-                  }`}
-                  style={{ width: `${(timeLeft / effectiveTurnTime) * 100}%` }}
-                />
-              </div>
-              <span className={`font-headline-md text-[16px] ${
-                timeLeft <= 2 ? 'text-red-500' : timeLeft <= 4 ? 'text-orange-400' : 'text-white'
+            {/* Numeric timer chip */}
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2">
+              <span className={`inline-block rounded-full border-[3px] border-black px-3 py-0.5 font-headline-md text-[16px] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${
+                timeLeft <= 2 ? 'bg-red-600 text-white' : timeLeft <= 4 ? 'bg-orange-500 text-white' : 'bg-surface-container-highest text-white'
               }`}>
                 {timeLeft}s
               </span>
@@ -595,34 +697,45 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
           const isCurrent = index === roomState.currentTurnIndex;
           const isDead = player.lives <= 0;
           const typingText = player.nickname === nickname ? input : (playerInputs[player.nickname] || '');
+          const isMe = player.nickname === nickname;
 
           return (
-            <div key={player.id} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ top: pos.top, left: pos.left }}>
-              <div className={`flex flex-col items-center gap-1 transition-all ${isDead ? 'opacity-40 grayscale' : ''}`}>
-                <p className={`font-headline-md text-[12px] sm:text-[14px] ${isCurrent ? 'text-primary-container' : 'text-white'}`}>
+            <div key={player.id} className="absolute z-20 -translate-x-1/2 -translate-y-1/2" style={{ top: pos.top, left: pos.left }}>
+              <div className={`flex flex-col items-center gap-1 transition-all ${isDead ? 'opacity-40 grayscale' : ''} ${isCurrent ? 'scale-110' : ''}`}>
+                <p className={`flex items-center gap-1 font-headline-md text-[12px] sm:text-[14px] ${isCurrent ? 'text-primary-container' : 'text-white'}`}>
                   {player.nickname}
+                  {isMe && <span className="rounded bg-primary-container/30 px-1 text-[9px] text-primary-container">TU</span>}
                 </p>
-                <div className="flex gap-0.5">
+                <div className="flex items-center gap-0.5">
                   {Array.from({ length: roomState.settings.maxLives }).map((_, i) => (
-                    <span key={i} className={`text-[10px] sm:text-[12px] ${i < player.lives ? '' : 'opacity-30'}`}>❤️</span>
+                    <span
+                      key={i}
+                      className={`text-[10px] sm:text-[13px] ${i < player.lives ? '' : 'opacity-25 grayscale'}`}
+                      style={isCurrent && i === player.lives - 1 ? { animation: 'bp-heartbeat 1s ease-in-out infinite' } : undefined}
+                    >❤️</span>
                   ))}
-                  {player.hasShield && <span className="text-[10px] sm:text-[12px]">🛡️</span>}
+                  {player.hasShield && <span className="text-[11px] sm:text-[14px]" title="Scudo attivo">🛡️</span>}
                 </div>
-                <div className={`flex h-12 w-12 items-center justify-center rounded-xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] sm:h-16 sm:w-16 ${
-                  isCurrent ? 'bg-primary-container ring-2 ring-green-400' : 'bg-surface-container-high'
-                }`}>
-                  {player.avatarUrl ? (
-                    <img src={player.avatarUrl} alt={player.nickname} className="h-full w-full rounded-lg object-cover" />
-                  ) : (
-                    <span className="material-symbols-outlined text-[24px] text-white sm:text-[32px]">person</span>
+                <div className="relative">
+                  {isCurrent && !isDead && (
+                    <span className="pointer-events-none absolute -inset-1 rounded-2xl border-[3px] border-green-400" style={{ animation: 'bp-ring-pulse 1.2s ease-out infinite' }} />
                   )}
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] sm:h-16 sm:w-16 ${
+                    isCurrent ? 'bg-primary-container ring-2 ring-green-400' : 'bg-surface-container-high'
+                  }`}>
+                    {player.avatarUrl ? (
+                      <img src={player.avatarUrl} alt={player.nickname} className="h-full w-full rounded-lg object-cover" />
+                    ) : (
+                      <span className="material-symbols-outlined text-[24px] text-white sm:text-[32px]">person</span>
+                    )}
+                  </div>
                 </div>
                 {isCurrent && typingText && (
-                  <p className="mt-1 max-w-[160px] whitespace-normal break-words rounded-lg border-[2px] border-black bg-surface-container-highest px-2 py-0.5 text-center font-headline-md text-[11px] text-primary-container shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:max-w-[200px] sm:text-[13px]">
+                  <p className="mt-1 max-w-[160px] whitespace-normal break-words rounded-lg border-[2px] border-black bg-surface-container-highest px-2 py-0.5 text-center font-headline-md text-[11px] text-primary-container shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:max-w-[200px] sm:text-[13px]" style={{ animation: 'bp-pop-in 0.15s ease-out' }}>
                     {typingText}
                   </p>
                 )}
-                {isCurrent && !isDead && <span className="text-[16px]">⬆️</span>}
+                {isCurrent && !isDead && <span className="text-[16px]" style={{ animation: 'bp-bounce-arrow 0.8s ease-in-out infinite' }}>⬇️</span>}
               </div>
             </div>
           );
@@ -630,7 +743,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
       </div>
 
       {/* Input */}
-      <div className="rounded-[2rem] border-[4px] border-black bg-surface-container p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] sm:p-6">
+      <div className={`relative z-10 w-full rounded-[2rem] border-[4px] border-black bg-surface-container p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] sm:p-6 ${isFullscreen ? 'max-w-[900px]' : ''}`}>
         {isSpectator ? (
           <p className="text-center font-headline-md text-[14px] text-on-surface-variant">
             👀 Stai guardando la partita come spettatore. Potrai giocare al prossimo round!
@@ -645,7 +758,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
               onKeyDown={handleKeyDown}
               disabled={!isMyTurn}
               placeholder={isMyTurn ? `Scrivi una parola con "${roomState.currentSyllable}"...` : 'Aspetta il tuo turno...'}
-              className="flex-1 rounded-xl border-[3px] border-black bg-surface-container-high px-4 py-3 font-headline-md text-[16px] text-white placeholder:text-on-surface-variant/50 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:outline-none focus:ring-2 focus:ring-primary-container disabled:opacity-50 sm:text-[18px]"
+              className={`flex-1 rounded-xl border-[3px] border-black bg-surface-container-high px-4 py-3 font-headline-md text-[16px] text-white placeholder:text-on-surface-variant/50 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:outline-none focus:ring-2 focus:ring-primary-container disabled:opacity-50 sm:text-[18px] ${isMyTurn ? 'ring-2 ring-green-400/60' : ''}`}
               autoComplete="off"
               autoCapitalize="off"
               spellCheck={false}
@@ -660,30 +773,28 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
           </div>
         )}
         {feedback.message && (
-          <p className={`mt-2 text-center font-body-lg text-[14px] ${
-            feedback.type === 'success' ? 'text-green-400' :
-            feedback.type === 'event' ? 'text-yellow-400' :
-            'text-red-400'
-          }`}>
+          <p
+            className={`mt-2 text-center font-body-lg text-[14px] ${
+              feedback.type === 'success' ? 'text-green-400' :
+              feedback.type === 'event' ? 'text-yellow-400' :
+              'text-red-400'
+            }`}
+            style={{ animation: 'bp-pop-in 0.2s ease-out' }}
+          >
             {feedback.message}
           </p>
         )}
       </div>
 
-      {/* Leave */}
-      <button onClick={onLeave} className="rounded-xl border-[3px] border-black bg-surface-container-high px-6 py-2 font-body-lg text-on-surface-variant shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:text-red-400">
-        <span className="material-symbols-outlined mr-1 align-middle text-[18px]">logout</span>
-        Abbandona
-      </button>
+      {/* Leave (hidden in fullscreen to keep it clean) */}
+      {!isFullscreen && (
+        <button onClick={onLeave} className="rounded-xl border-[3px] border-black bg-surface-container-high px-6 py-2 font-body-lg text-on-surface-variant shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:text-red-400">
+          <span className="material-symbols-outlined mr-1 align-middle text-[18px]">logout</span>
+          Abbandona
+        </button>
+      )}
 
-      <style>{`
-        @keyframes bomb-shake {
-          0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
-          25% { transform: translate(-50%, -50%) rotate(${2 + shakeIntensity * 6}deg) translate(${shakeIntensity * 3}px, 0); }
-          50% { transform: translate(-50%, -50%) rotate(0deg); }
-          75% { transform: translate(-50%, -50%) rotate(-${2 + shakeIntensity * 6}deg) translate(-${shakeIntensity * 3}px, 0); }
-        }
-      `}</style>
+      <style>{gameStyles}</style>
     </div>
   );
 };
