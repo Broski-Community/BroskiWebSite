@@ -4,7 +4,7 @@ export const LINKS_CONFIG = {
   map: 'https://map.broskismp.it',
   store: 'https://store.broskismp.it',
   wiki: 'https://wiki.broskismp.it',
-  repoProgetti: 'https://github.com/broskicommunity/projects',
+  repoProgetti: 'https://github.com/Broski-Community',
   instagram: 'https://instagram.com/broskicommunity',
   twitch: 'https://twitch.tv/broskicommunity',
   youtube: 'https://youtube.com/@broskicommunity',
