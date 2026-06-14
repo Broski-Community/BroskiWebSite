@@ -15,8 +15,12 @@
     }
   ],
   "rewrites": [
+    {
+      "source": "/.well-known/discord",
+      "destination": "/.well-known/discord"
+    },
     { 
-      "source": "/((?!\\.well-known\/).* )", 
+      "source": "/(.*)", 
       "destination": "/index.html" 
     }
   ]
