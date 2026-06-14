@@ -8,4 +8,4 @@ Disallow: /signin/
 Disallow: /signup/
 Disallow: /store/
 Disallow: /mods/
-Sitemap: https://www.ibroski.net/sitemap.xml
+Sitemap: https://www.ibroski.net/seo/sitemap.xml
