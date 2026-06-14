@@ -3,7 +3,21 @@
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "framework": null,
+  "headers": [
+    {
+      "source": "/.well-known/discord",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        }
+      ]
+    }
+  ],
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { 
+      "source": "/((?!\\.well-known\/).* )", 
+      "destination": "/index.html" 
+    }
   ]
 }
