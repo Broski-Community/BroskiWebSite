@@ -1,0 +1,11 @@
+User-agent: *
+Disallow:
+
+Disallow: /countdown/
+Disallow: /mie-idee/
+Disallow: /admin/
+Disallow: /signin/
+Disallow: /signup/
+Disallow: /store/
+Disallow: /mods/
+Sitemap: https://www.ibroski.net/sitemap.xml
