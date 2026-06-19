@@ -3,19 +3,6 @@
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "framework": null,
-  "redirects": [
-    {
-      "source": "/",
-      "has": [
-        {
-          "type": "host",
-          "value": "discord.ibroski.net"
-        }
-      ],
-      "destination": "https://discord.gg/pWUQB4bNVd",
-      "permanent": true
-    }
-  ],
   "headers": [
     {
       "source": "/.well-known/discord",
@@ -29,7 +16,7 @@
   ],
   "rewrites": [
     { 
-      "source": "/((?!\\.well-known\/).*)", 
+      "source": "/((?!\\.well-known\/).* )", 
       "destination": "/index.html" 
     }
   ]
