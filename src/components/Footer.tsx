@@ -8,7 +8,7 @@ const Footer: React.FC = () => {
   return (
     <footer className="bg-black w-full py-8 px-12 flex flex-col md:flex-row justify-between items-center gap-4 border-t-4 border-red-600">
       <div className="flex items-center">
-        <img src="/logo/pm4f9d0.PNG" alt="Broski Logo" className="h-12 w-auto hover:scale-105 transition-transform duration-300" />
+        <img src="/logo/pm4f9d0.PNG" alt="Broski Logo" className="h-10 w-auto hover:scale-105 transition-transform duration-300" />
       </div>
       <div className="flex flex-wrap gap-6 justify-center font-body-sm text-xs font-bold tracking-widest uppercase">
         <TransitionLink className="text-slate-500 hover:text-blue-400 transition-colors bg-surface-container-lowest px-3 py-1 rounded-xl" to="/tou">{t('footer.terms')}</TransitionLink>

@@ -18,7 +18,7 @@ const UnstableSmp: React.FC = () => {
             {t('smp.badge')}
           </div>
           <h2 className="font-headline-lg text-[52px] uppercase leading-none tracking-tighter text-blue-500 drop-shadow-[5px_5px_0px_rgba(0,0,0,1)] md:text-[82px]">
-            ???
+            Might SMP
           </h2>
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-2 rounded-2xl border-[2px] border-black bg-black px-3 py-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">

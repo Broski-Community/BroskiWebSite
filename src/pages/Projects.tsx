@@ -75,9 +75,9 @@ const Projects: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-1">
-              <ProjectStat icon="dns" label={t('projects.hero.stat.server')} value="01" accent="bg-primary-container" />
-              <ProjectStat icon="menu_book" label={t('projects.youtube.title')} value="100%" accent="bg-blue-600" />
-              <ProjectStat icon="extension" label={t('projects.discord.title')} value="LAB" accent="bg-tertiary !text-black" />
+              <ProjectStat icon="dns" label={'SMP in arrivo'} value="Nuova" accent="bg-primary-container" />
+              <ProjectStat icon="menu_book" label={'attività dei membri ogni giorno'} value="99.99%" accent="bg-blue-600" />
+              <ProjectStat icon="extension" label={'Suggeriscici idee e novità da aggiungere ai nostri progetti'} value="Lab e Idee" accent="bg-tertiary !text-black" />
             </div>
           </div>
         </header>
@@ -85,7 +85,7 @@ const Projects: React.FC = () => {
 
       <div id="projects-grid" className="grid grid-cols-1 gap-margin lg:grid-cols-3">
         
-        {/* Unstable SMP (Col-span-2) */}
+        {/* nostre SMP (Col-span-2) */}
         <div className="lg:col-span-2">
           <div className="group relative flex h-full min-h-[460px] flex-col overflow-hidden rounded-[2rem] border-4 border-black bg-surface-container shadow-[9px_9px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
             {/* Sfondo Astratto */}
@@ -101,10 +101,10 @@ const Projects: React.FC = () => {
             <div className="relative z-10 flex min-h-[460px] flex-col justify-end p-margin">
               <div className="mb-4 flex flex-wrap gap-2">
                 <ProjectTag className="bg-black text-white">SEASON 0</ProjectTag>
-                <ProjectTag className="bg-surface-bright text-white">COMMUNITY LORE</ProjectTag>
-                <ProjectTag className="bg-tertiary text-black">MINECRAFT</ProjectTag>
+                <ProjectTag className="bg-surface-bright text-white">PRIVATE!</ProjectTag>
+                <ProjectTag className="bg-tertiary text-black">MINECRAFT 1.21</ProjectTag>
               </div>
-              <h2 className="mb-2 font-headline-lg text-5xl text-white drop-shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:text-6xl">??? SMP</h2>
+              <h2 className="mb-2 font-headline-lg text-5xl text-white drop-shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:text-6xl">Might SMP</h2>
               
               <div className="mb-4 flex items-center gap-2">
                 <div className="h-4 w-4 rounded-full border-2 border-black bg-red-500 shadow-[0_0_12px_rgba(255,0,0,1)]"></div>
