@@ -152,10 +152,10 @@ const Header: React.FC = () => {
           {/* Profile button */}
           <div className="relative" ref={menuRef}>
             <div
-              className={`relative flex items-center gap-2 border-[3px] border-black bg-surface-container px-2 py-1 transition-all duration-300 ease-out ${
+              className={`relative flex items-center gap-2 rounded-2xl border-[3px] border-black bg-surface-container px-2 py-1 transition-all duration-300 ease-out delay-300 ${
                 menuOpen
-                  ? 'w-44 justify-end rounded-2xl rounded-b-none shadow-none delay-0'
-                  : 'w-auto rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] delay-300'
+                  ? 'rounded-b-none border-b-0 shadow-[4px_0px_0px_0px_rgba(0,0,0,1)]'
+                  : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
               }`}
             >
               {/* Minecraft IGN that slides out to the left when opening; links to /profilo */}
@@ -164,7 +164,7 @@ const Header: React.FC = () => {
                 onClick={() => setMenuOpen(false)}
                 tabIndex={menuOpen ? 0 : -1}
                 className={`overflow-hidden whitespace-nowrap rounded-lg font-label-caps text-[12px] text-white transition-all duration-300 ease-out hover:text-tertiary ${
-                  menuOpen ? 'max-w-[140px] px-1 opacity-100 ml-1 delay-0' : 'pointer-events-none max-w-0 px-0 opacity-0 ml-0 delay-300'
+                  menuOpen ? 'w-[120px] px-1 opacity-100 ml-1 delay-0' : 'pointer-events-none w-0 px-0 opacity-0 ml-0 delay-300'
                 }`}
               >
                 {profile.minecraft_username}
@@ -186,8 +186,8 @@ const Header: React.FC = () => {
               )}
             </div>
             <div
-              className={`absolute right-0 top-full flex w-44 flex-col gap-2 overflow-hidden rounded-2xl rounded-t-none border-[3px] border-t-0 border-black bg-surface-container px-3 origin-top transition-all duration-300 ease-out ${
-                menuOpen ? 'max-h-[400px] py-3 opacity-100 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] delay-300' : 'pointer-events-none max-h-0 py-0 opacity-0 shadow-none delay-0'
+              className={`absolute left-0 right-0 top-full flex flex-col gap-2 overflow-hidden rounded-2xl rounded-t-none border-[3px] border-t-0 px-3 origin-top transition-all duration-300 ease-out ${
+                menuOpen ? 'max-h-[200px] py-3 border-black bg-surface-container shadow-[4px_4px_0px_0px_rgba(0,0,0,1),4px_0px_0px_0px_rgba(0,0,0,1)] delay-300' : 'pointer-events-none max-h-0 py-0 border-transparent bg-transparent shadow-none delay-0'
               }`}
             >
               {profile.role === 'admin' && (
