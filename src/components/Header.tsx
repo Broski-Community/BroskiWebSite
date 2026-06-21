@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import TransitionLink from './TransitionLink';
 import { useAuth } from '../context/AuthContext';
@@ -13,6 +13,7 @@ const Header: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [hasNotification, setHasNotification] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,6 +22,18 @@ const Header: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Close the profile dropdown when clicking anywhere outside of it
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
 
   // Check for notifications
   useEffect(() => {
@@ -72,7 +85,7 @@ const Header: React.FC = () => {
       <TransitionLink to="/" className="border-4 border-black px-4 py-1 bg-red-500 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-red-400 hover:translate-y-1 hover:translate-x-1 transition-all active:translate-y-2 active:translate-x-2 cursor-pointer flex items-center justify-center rounded-2xl">
         <img src="/logo/3d36j5v.svg" alt="Broski Logo" className="h-8 w-auto drop-shadow-md" />
       </TransitionLink>
-      <div className="hidden md:flex gap-8 items-center font-headline-md uppercase tracking-tighter">
+      <div className="hidden md:flex gap-8 items-center font-headline-md uppercase tracking-tighter absolute left-1/2 -translate-x-1/2">
         <TransitionLink 
           to="/" 
           className={`${location.pathname === '/' ? 'text-yellow-400 underline decoration-4 underline-offset-4' : 'text-white'} hover:bg-red-500 hover:translate-y-1 hover:translate-x-1 transition-all rounded-xl px-2`}
@@ -137,36 +150,40 @@ const Header: React.FC = () => {
           </div>
 
           {/* Profile button */}
-          <div className="relative">
-            <button
-              onClick={() => setMenuOpen((v) => !v)}
-              className="relative flex items-center gap-2 rounded-2xl border-[3px] border-black bg-surface-container px-2 py-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none"
-            >
-              <img
-                src={profile.ign_verified ? `https://mc-heads.net/avatar/${profile.minecraft_username}/64` : '/profilepng/profile.png'}
-                alt="Profilo"
-                className="h-8 w-8 rounded-xl border-2 border-black"
-              />
-              <span className="material-symbols-outlined text-white hidden sm:block">expand_more</span>
-              {hasNotification && (
-                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-black bg-red-500" />
-              )}
-            </button>
-          {menuOpen && (
-            <div className="absolute right-0 top-full mt-2 flex w-44 flex-col gap-2 rounded-2xl border-[3px] border-black bg-surface-container p-3 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+          <div className="relative" ref={menuRef}>
+            <div className="relative flex items-center gap-2 rounded-2xl border-[3px] border-black bg-surface-container px-2 py-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              {/* Minecraft IGN that slides out to the left when opening; links to /profilo */}
               <TransitionLink
                 to="/profilo"
                 onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-2 rounded-xl border-2 border-black bg-surface-container-high px-3 py-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none"
+                tabIndex={menuOpen ? 0 : -1}
+                className={`overflow-hidden whitespace-nowrap rounded-lg font-label-caps text-[12px] text-white transition-all duration-300 ease-out hover:text-tertiary ${
+                  menuOpen ? 'max-w-[140px] px-1 opacity-100 ml-1 delay-0' : 'pointer-events-none max-w-0 px-0 opacity-0 ml-0 delay-300'
+                }`}
+              >
+                {profile.minecraft_username}
+              </TransitionLink>
+              {/* Avatar + chevron toggles the dropdown */}
+              <button
+                onClick={() => setMenuOpen((v) => !v)}
+                className="flex items-center gap-2 rounded-xl transition-all active:translate-x-0.5 active:translate-y-0.5"
               >
                 <img
                   src={profile.ign_verified ? `https://mc-heads.net/avatar/${profile.minecraft_username}/64` : '/profilepng/profile.png'}
-                  alt=""
-                  className="h-6 w-6 rounded-lg border border-black"
+                  alt="Profilo"
+                  className="h-8 w-8 rounded-xl border-2 border-black"
                 />
-                <span className="truncate font-label-caps text-[12px] text-white">{profile.minecraft_username}</span>
-              </TransitionLink>
-
+                <span className={`material-symbols-outlined text-white hidden sm:block transition-transform duration-300 ${menuOpen ? 'rotate-180' : ''}`}>expand_more</span>
+              </button>
+              {hasNotification && (
+                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-black bg-red-500" />
+              )}
+            </div>
+            <div
+              className={`absolute right-0 top-full mt-2 flex w-44 flex-col gap-2 overflow-hidden rounded-2xl border-[3px] border-black bg-surface-container p-3 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] origin-top transition-all duration-300 ease-out ${
+                menuOpen ? 'max-h-[400px] opacity-100 delay-300' : 'pointer-events-none max-h-0 border-transparent py-0 opacity-0 delay-0'
+              }`}
+            >
               {profile.role === 'admin' && (
                 <TransitionLink
                   to="/admin"
@@ -209,7 +226,6 @@ const Header: React.FC = () => {
                 {t('nav.logout')}
               </button>
             </div>
-          )}
           </div>
         </div>
       ) : (
