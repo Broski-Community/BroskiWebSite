@@ -281,7 +281,10 @@ const PlayerDetail: React.FC<{
             {t('demonrank.card.inprogress_empty')}
           </p>
         ) : (
-          <ul className="dtt-scroll -mr-2 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-2">
+          <ul
+            data-lenis-prevent
+            className="dtt-scroll -mr-2 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain pr-2"
+          >
             {stats.inProgress.map((d) => (
               <ProgressRow key={d.level_id} demon={d} />
             ))}
@@ -302,7 +305,10 @@ const PlayerDetail: React.FC<{
             {t('demonrank.card.completed_empty')}
           </p>
         ) : (
-          <ul className="dtt-scroll -mr-2 flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto pr-2">
+          <ul
+            data-lenis-prevent
+            className="dtt-scroll -mr-2 flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto overscroll-contain pr-2"
+          >
             {stats.completed.map((d) => (
               <CompletedRow key={d.level_id} demon={d} />
             ))}
