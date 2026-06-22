@@ -262,10 +262,11 @@ const PlayerDetail: React.FC<{
       />
     </div>
 
-    {/* Two separate cards: In corso / Completati */}
+    {/* Two separate cards: In corso / Completati. Each card has a fixed max
+        height with its own internal scroll so long lists never stretch the page. */}
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
       {/* In progress card */}
-      <div className="rounded-2xl border-[3px] border-black bg-surface-container p-5 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+      <div className="flex max-h-[460px] flex-col rounded-2xl border-[3px] border-black bg-surface-container p-5 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
         <CardHeading
           icon="trending_up"
           iconClass="bg-red-500 text-white"
@@ -277,7 +278,7 @@ const PlayerDetail: React.FC<{
             Nessun demon in corso.
           </p>
         ) : (
-          <ul className="flex flex-col gap-3">
+          <ul className="dtt-scroll -mr-2 flex flex-1 flex-col gap-3 overflow-y-auto pr-2">
             {stats.inProgress.map((d) => (
               <ProgressRow key={d.level_id} demon={d} />
             ))}
@@ -286,7 +287,7 @@ const PlayerDetail: React.FC<{
       </div>
 
       {/* Completed card */}
-      <div className="rounded-2xl border-[3px] border-black bg-surface-container p-5 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+      <div className="flex max-h-[460px] flex-col rounded-2xl border-[3px] border-black bg-surface-container p-5 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
         <CardHeading
           icon="military_tech"
           iconClass="bg-tertiary text-black"
@@ -298,7 +299,7 @@ const PlayerDetail: React.FC<{
             Nessun demon completato al 100%.
           </p>
         ) : (
-          <ul className="flex flex-col gap-1.5">
+          <ul className="dtt-scroll -mr-2 flex flex-1 flex-col gap-1.5 overflow-y-auto pr-2">
             {stats.completed.map((d) => (
               <CompletedRow key={d.level_id} demon={d} />
             ))}

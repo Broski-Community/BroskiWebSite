@@ -85,7 +85,7 @@ const Hero: React.FC = () => (
 );
 
 /** Compact "how it works" panel: points formula + tier weights + rank ladder. */
-const HowItWorks: React.FC = () => (
+const HowItWorksPanels: React.FC = () => (
   <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
     {/* Points */}
     <div className="rounded-2xl border-[3px] border-black bg-surface-container p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
@@ -159,6 +159,7 @@ const HowItWorks: React.FC = () => (
 const DemonRankPage: React.FC = () => {
   const { leaderboard, statsByPlayer, loading, error, refetch } = usePlayerStats();
   const [selectedUsername, setSelectedUsername] = useState<string | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   // Default the selection to the leader once data loads, and keep the selection
   // valid if it disappears on a refetch.
@@ -184,9 +185,38 @@ const DemonRankPage: React.FC = () => {
       <div className="pointer-events-none absolute left-[-8rem] top-28 h-72 w-72 rounded-full bg-primary-container/10 blur-3xl" />
       <div className="pointer-events-none absolute right-[-10rem] top-[40rem] h-80 w-80 rounded-full bg-secondary-container/10 blur-3xl" />
 
-      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-10">
+      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-8">
         <Hero />
-        <HowItWorks />
+
+        {/* Collapsible instructions: collapsed by default so the leaderboard is
+            visible right away without scrolling past the full legend. */}
+        <div className="rounded-2xl border-[3px] border-black bg-surface-container shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+          <button
+            type="button"
+            onClick={() => setHelpOpen((v) => !v)}
+            aria-expanded={helpOpen}
+            className="flex w-full items-center gap-3 px-5 py-3 text-left"
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg border-[2px] border-black bg-tertiary text-black">
+              <span className="material-symbols-outlined text-[18px]">help</span>
+            </span>
+            <span className="font-headline-md text-[15px] uppercase tracking-tight text-white">
+              Come funzionano punti e ranghi
+            </span>
+            <span
+              className={`material-symbols-outlined ml-auto text-white transition-transform duration-300 ${
+                helpOpen ? 'rotate-180' : ''
+              }`}
+            >
+              expand_more
+            </span>
+          </button>
+          {helpOpen ? (
+            <div className="border-t-[3px] border-black p-5">
+              <HowItWorksPanels />
+            </div>
+          ) : null}
+        </div>
 
         {loading ? (
           <LoadingState />
