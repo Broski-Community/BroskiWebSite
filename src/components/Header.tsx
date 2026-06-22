@@ -122,12 +122,6 @@ const Header: React.FC = () => {
         >
           Mods
         </TransitionLink>
-        <TransitionLink 
-          to="/stats" 
-          className={`${location.pathname === '/stats' || location.pathname === '/demon-tier-list' ? 'text-yellow-400 underline decoration-4 underline-offset-4' : 'text-white'} hover:bg-red-500 hover:translate-y-1 hover:translate-x-1 transition-all rounded-xl px-2`}
-        >
-          Stats
-        </TransitionLink>
       </div>
       {user && profile?.minecraft_username ? (
         <div className="flex items-center gap-2">
@@ -193,7 +187,7 @@ const Header: React.FC = () => {
             </div>
             <div
               className={`absolute left-0 right-0 top-full flex flex-col gap-2 overflow-hidden rounded-2xl rounded-t-none border-[3px] border-t-0 px-3 origin-top transition-all duration-300 ease-out ${
-                menuOpen ? 'max-h-[200px] py-3 border-black bg-surface-container shadow-[4px_4px_0px_0px_rgba(0,0,0,1),4px_0px_0px_0px_rgba(0,0,0,1)] delay-300' : 'pointer-events-none max-h-0 py-0 border-transparent bg-transparent shadow-none delay-0'
+                menuOpen ? 'max-h-[260px] py-3 border-black bg-surface-container shadow-[4px_4px_0px_0px_rgba(0,0,0,1),4px_0px_0px_0px_rgba(0,0,0,1)] delay-300' : 'pointer-events-none max-h-0 py-0 border-transparent bg-transparent shadow-none delay-0'
               }`}
             >
               {profile.role === 'admin' && (
@@ -222,6 +216,14 @@ const Header: React.FC = () => {
                   )}
                 </TransitionLink>
               )}
+              <TransitionLink
+                to="/demonrank"
+                onClick={() => setMenuOpen(false)}
+                className="flex w-full items-center gap-2 rounded-xl border-[3px] border-black bg-primary-container px-3 py-2 font-label-caps text-[12px] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none"
+              >
+                <span className="material-symbols-outlined text-[18px]">leaderboard</span>
+                DemonRank
+              </TransitionLink>
               <TransitionLink
                 to="/bomb-party"
                 onClick={() => setMenuOpen(false)}

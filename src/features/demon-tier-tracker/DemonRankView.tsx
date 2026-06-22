@@ -1,10 +1,10 @@
 /**
- * Demon Tier Tracker — Stats_Viewer presentational view (React).
+ * Demon Tier Tracker — DemonRank presentational view (React).
  *
  * Pure data-in/markup-out: renders the ranked leaderboard on the left and the
- * selected player's profile (rank, points, hardest demon, and the
- * progress/completed report) on the right. All data is computed upstream by the
- * pure `scoring.ts` helpers; this file only renders.
+ * selected player's profile on the right. The player's "In corso" (in-progress)
+ * and "Completati" (completed) demons live in TWO SEPARATE cards. All data is
+ * computed upstream by the pure `scoring.ts` helpers; this file only renders.
  */
 import React from 'react';
 import type { DifficultyTier } from './ordering';
@@ -15,7 +15,7 @@ import {
   type PlayerStats,
 } from './scoring';
 
-/** Italian labels for difficulty tiers (matches the site's primary language). */
+/** Italian-friendly labels for difficulty tiers. */
 const TIER_LABEL: Record<DifficultyTier, string> = {
   extreme: 'Extreme',
   insane: 'Insane',
@@ -167,8 +167,30 @@ const CompletedRow: React.FC<{ demon: PlayerDemon }> = ({ demon }) => (
   </li>
 );
 
-/** Props for {@link StatsViewerView}. */
-export interface StatsViewerViewProps {
+/** Card heading with an icon and a count chip. */
+const CardHeading: React.FC<{
+  icon: string;
+  iconClass: string;
+  title: string;
+  count: number;
+}> = ({ icon, iconClass, title, count }) => (
+  <div className="mb-4 flex items-center gap-2">
+    <span
+      className={`flex h-8 w-8 items-center justify-center rounded-lg border-[2px] border-black ${iconClass}`}
+    >
+      <span className="material-symbols-outlined text-[18px]">{icon}</span>
+    </span>
+    <h3 className="font-headline-md text-[15px] uppercase tracking-tight text-white">
+      {title}
+    </h3>
+    <span className="ml-auto rounded-md border-[2px] border-black bg-surface-container-high px-2 py-0.5 font-label-caps text-[10px] text-on-surface-variant">
+      {count}
+    </span>
+  </div>
+);
+
+/** Props for {@link DemonRankView}. */
+export interface DemonRankViewProps {
   /** Ranked leaderboard. */
   leaderboard: LeaderboardEntry[];
   /** Currently selected player's username (or null when none). */
@@ -240,50 +262,58 @@ const PlayerDetail: React.FC<{
       />
     </div>
 
-    {/* Report */}
-    <div className="rounded-2xl border-[3px] border-black bg-surface-container p-5 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
-      <h3 className="mb-4 font-headline-md text-[15px] uppercase tracking-tight text-white">
-        [ Report progressi e completamenti ]
-      </h3>
+    {/* Two separate cards: In corso / Completati */}
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+      {/* In progress card */}
+      <div className="rounded-2xl border-[3px] border-black bg-surface-container p-5 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+        <CardHeading
+          icon="trending_up"
+          iconClass="bg-red-500 text-white"
+          title="In corso"
+          count={stats.inProgress.length}
+        />
+        {stats.inProgress.length === 0 ? (
+          <p className="font-body-sm text-[13px] text-on-surface-variant/80">
+            Nessun demon in corso.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {stats.inProgress.map((d) => (
+              <ProgressRow key={d.level_id} demon={d} />
+            ))}
+          </ul>
+        )}
+      </div>
 
-      <p className="mb-2 font-label-caps text-[11px] uppercase tracking-wide text-on-surface-variant">
-        In corso
-      </p>
-      {stats.inProgress.length === 0 ? (
-        <p className="mb-5 font-body-sm text-[13px] text-on-surface-variant/80">
-          Nessun demon in corso.
-        </p>
-      ) : (
-        <ul className="mb-6 flex flex-col gap-3">
-          {stats.inProgress.map((d) => (
-            <ProgressRow key={d.level_id} demon={d} />
-          ))}
-        </ul>
-      )}
-
-      <p className="mb-2 font-label-caps text-[11px] uppercase tracking-wide text-on-surface-variant">
-        Completati ({stats.completed.length})
-      </p>
-      {stats.completed.length === 0 ? (
-        <p className="font-body-sm text-[13px] text-on-surface-variant/80">
-          Nessun demon completato al 100%.
-        </p>
-      ) : (
-        <ul className="flex flex-col gap-1.5">
-          {stats.completed.map((d) => (
-            <CompletedRow key={d.level_id} demon={d} />
-          ))}
-        </ul>
-      )}
+      {/* Completed card */}
+      <div className="rounded-2xl border-[3px] border-black bg-surface-container p-5 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+        <CardHeading
+          icon="military_tech"
+          iconClass="bg-tertiary text-black"
+          title="Completati"
+          count={stats.completed.length}
+        />
+        {stats.completed.length === 0 ? (
+          <p className="font-body-sm text-[13px] text-on-surface-variant/80">
+            Nessun demon completato al 100%.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-1.5">
+            {stats.completed.map((d) => (
+              <CompletedRow key={d.level_id} demon={d} />
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   </div>
 );
 
 /**
- * The Stats_Viewer: leaderboard + selected-player detail. Renders an empty
+ * The DemonRank board: leaderboard + selected-player detail. Renders an empty
  * state when there are no players yet.
  */
-const StatsViewerView: React.FC<StatsViewerViewProps> = ({
+const DemonRankView: React.FC<DemonRankViewProps> = ({
   leaderboard,
   selectedUsername,
   selected,
@@ -292,7 +322,7 @@ const StatsViewerView: React.FC<StatsViewerViewProps> = ({
   if (leaderboard.length === 0) {
     return (
       <div
-        data-testid="stats-empty"
+        data-testid="demonrank-empty"
         className="flex flex-col items-center gap-4 rounded-2xl border-[3px] border-black bg-surface-container p-12 text-center shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]"
       >
         <span className="material-symbols-outlined text-[64px] text-on-surface-variant/40">
@@ -312,7 +342,7 @@ const StatsViewerView: React.FC<StatsViewerViewProps> = ({
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
       {/* Leaderboard */}
-      <aside className="rounded-2xl border-[3px] border-black bg-surface-container-high/40 p-4 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+      <aside className="self-start rounded-2xl border-[3px] border-black bg-surface-container-high/40 p-4 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] lg:sticky lg:top-24">
         <span className="mb-3 inline-flex items-center gap-2 rounded-full border-[2px] border-black bg-tertiary px-3 py-1 font-label-caps text-[10px] uppercase text-black">
           <span className="material-symbols-outlined text-[14px]">emoji_events</span>
           Leaderboard
@@ -346,4 +376,4 @@ const StatsViewerView: React.FC<StatsViewerViewProps> = ({
   );
 };
 
-export default StatsViewerView;
+export default DemonRankView;
