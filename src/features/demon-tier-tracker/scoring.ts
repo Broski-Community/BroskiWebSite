@@ -26,6 +26,8 @@ export interface PlayerDemon {
   level_id: string;
   /** Display name of the demon. */
   demon_name: string;
+  /** The level creator's name, or null when unknown. */
+  demon_creator: string | null;
   /** The demon's difficulty tier. */
   difficulty_tier: DifficultyTier;
   /** Best percentage for this player on this demon, integer 0..100. */
@@ -183,6 +185,7 @@ export function computePlayerStats(
     const demon: PlayerDemon = {
       level_id: row.level_id,
       demon_name: row.demon_name,
+      demon_creator: row.demon_creator ?? null,
       difficulty_tier: row.difficulty_tier,
       percentage: toIntegerPercentage(row.percentage),
     };

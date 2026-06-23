@@ -720,6 +720,7 @@ const translations = {
     'demonrank.card.completed': 'Completati',
     'demonrank.card.inprogress_empty': 'Nessun demon in corso.',
     'demonrank.card.completed_empty': 'Nessun demon completato al 100%.',
+    'demonrank.demon.by': 'Da',
     'demonrank.empty.title': 'Ancora nessun dato',
     'demonrank.empty.desc': 'Lancia Geometry Dash con la mod per inviare i tuoi record.',
   },
@@ -1361,6 +1362,7 @@ const translations = {
     'demonrank.card.completed': 'Completed',
     'demonrank.card.inprogress_empty': 'No demons in progress.',
     'demonrank.card.completed_empty': 'No demons completed at 100%.',
+    'demonrank.demon.by': 'By',
     'demonrank.empty.title': 'No data yet',
     'demonrank.empty.desc': 'Launch Geometry Dash with the mod to submit your records.',
   }

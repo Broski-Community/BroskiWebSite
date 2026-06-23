@@ -55,6 +55,8 @@ export interface TierListViewRow {
   level_id: string;
   /** Display name of the demon. */
   demon_name: string;
+  /** The level creator's name, or null/undefined when unknown. */
+  demon_creator?: string | null;
   /** The demon's difficulty tier. */
   difficulty_tier: DifficultyTier;
   /** The player who holds this record. */
@@ -89,6 +91,8 @@ export interface DemonGroup {
   level_id: string;
   /** Display name of the demon. */
   demon_name: string;
+  /** The level creator's name, or null when unknown. */
+  demon_creator: string | null;
   /** The demon's difficulty tier. */
   difficulty_tier: DifficultyTier;
   /**
@@ -190,6 +194,7 @@ export function groupByTier(rows: readonly TierListViewRow[]): GroupedTierList {
       demon = {
         level_id: row.level_id,
         demon_name: row.demon_name,
+        demon_creator: row.demon_creator ?? null,
         difficulty_tier: row.difficulty_tier,
         records: [],
       };

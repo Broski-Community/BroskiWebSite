@@ -131,11 +131,20 @@ const StatTile: React.FC<{
 );
 
 /** A single in-progress demon row with a percentage bar. */
-const ProgressRow: React.FC<{ demon: PlayerDemon }> = ({ demon }) => (
+const ProgressRow: React.FC<{ demon: PlayerDemon }> = ({ demon }) => {
+  const { t } = useLanguage();
+  return (
   <li>
     <div className="mb-1 flex items-baseline justify-between gap-3">
-      <span className="truncate font-headline-md text-[14px] text-white">
-        {demon.demon_name}
+      <span className="flex min-w-0 flex-col">
+        <span className="truncate font-headline-md text-[14px] text-white">
+          {demon.demon_name}
+        </span>
+        {demon.demon_creator ? (
+          <span className="truncate font-body-sm text-[11px] text-on-surface-variant">
+            {t('demonrank.demon.by')} {demon.demon_creator}
+          </span>
+        ) : null}
       </span>
       <span className="shrink-0 font-headline-md text-[13px] text-red-400">
         {demon.percentage}%
@@ -148,13 +157,23 @@ const ProgressRow: React.FC<{ demon: PlayerDemon }> = ({ demon }) => (
       />
     </div>
   </li>
-);
+  );
+};
 
 /** A single completed demon row. */
-const CompletedRow: React.FC<{ demon: PlayerDemon }> = ({ demon }) => (
+const CompletedRow: React.FC<{ demon: PlayerDemon }> = ({ demon }) => {
+  const { t } = useLanguage();
+  return (
   <li className="flex items-center justify-between gap-3 rounded-lg bg-surface-container-high px-3 py-2">
-    <span className="truncate font-body-sm text-[14px] text-white">
-      {demon.demon_name}
+    <span className="flex min-w-0 flex-col">
+      <span className="truncate font-body-sm text-[14px] text-white">
+        {demon.demon_name}
+      </span>
+      {demon.demon_creator ? (
+        <span className="truncate font-body-sm text-[11px] text-on-surface-variant">
+          {t('demonrank.demon.by')} {demon.demon_creator}
+        </span>
+      ) : null}
     </span>
     <span className="flex shrink-0 items-center gap-2">
       <span className="font-label-caps text-[10px] uppercase text-on-surface-variant">
@@ -166,7 +185,8 @@ const CompletedRow: React.FC<{ demon: PlayerDemon }> = ({ demon }) => (
       </span>
     </span>
   </li>
-);
+  );
+};
 
 /** Card heading with an icon and a count chip. */
 const CardHeading: React.FC<{

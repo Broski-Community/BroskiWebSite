@@ -75,8 +75,9 @@ async function seedDemons() {
     }
     let name = String(e.nome ?? '').trim() || 'Unknown';
     if (name.length > 255) name = name.slice(0, 255);
+    const creator = String(e.creatore ?? '').trim() || null;
     seen.add(level_id);
-    rows.push({ level_id, name, difficulty_tier: tier });
+    rows.push({ level_id, name, difficulty_tier: tier, creator });
   }
   if (unmapped.size) {
     throw new Error(`Unmapped difficolta values: ${[...unmapped].join(', ')}`);
@@ -89,7 +90,7 @@ async function seedDemons() {
     const chunk = rows.slice(i, i + BATCH);
     const { error } = await supabase
       .from('dtt_demons')
-      .upsert(chunk, { onConflict: 'level_id', ignoreDuplicates: true });
+      .upsert(chunk, { onConflict: 'level_id' });
     if (error) throw new Error(`dtt_demons upsert failed at batch ${i / BATCH}: ${error.message}`);
     upserted += chunk.length;
     process.stdout.write(`\r  …${upserted}/${rows.length}`);

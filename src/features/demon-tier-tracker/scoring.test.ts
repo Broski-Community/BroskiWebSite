@@ -62,8 +62,8 @@ describe('rankForPoints', () => {
 describe('hardestOf', () => {
   it('prefers the highest difficulty tier', () => {
     const demons: PlayerDemon[] = [
-      { level_id: '1', demon_name: 'Easy One', difficulty_tier: 'easy', percentage: 100 },
-      { level_id: '2', demon_name: 'Extreme One', difficulty_tier: 'extreme', percentage: 50 },
+      { level_id: '1', demon_name: 'Easy One', demon_creator: 'A', difficulty_tier: 'easy', percentage: 100 },
+      { level_id: '2', demon_name: 'Extreme One', demon_creator: 'B', difficulty_tier: 'extreme', percentage: 50 },
     ];
     expect(hardestOf(demons)?.level_id).toBe('2');
   });

@@ -25,7 +25,7 @@ export const TIER_LIST_VIEW = 'dtt_tier_list_view';
 
 /** Columns selected from the view, matching {@link TierListViewRow}. */
 export const TIER_LIST_COLUMNS =
-  'level_id, demon_name, difficulty_tier, username, percentage, updated_at';
+  'level_id, demon_name, difficulty_tier, username, percentage, updated_at, demon_creator';
 
 /**
  * The result of a single read against `dtt_tier_list_view`.
