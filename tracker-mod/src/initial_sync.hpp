@@ -23,13 +23,11 @@ namespace tracker {
  * Records_API endpoint for the Initial_Sync bulk upload (design: `POST
  * /api/v1/records`).
  *
- * This is a PLACEHOLDER and MUST be set to the real deployment URL before the mod
- * is shipped. Override it at configure time without editing source, e.g.:
+ * Defaults to the live deployment at https://www.ibroski.net/api/v1/records. It
+ * can still be overridden at configure time without editing source, e.g.:
  *
  *   cmake -S tracker-mod -B build \
  *     -DCMAKE_CXX_FLAGS='-DTRACKER_RECORDS_API_URL="https://your.deployment/api/v1/records"'
- *
- * or change the default below.
  */
 #ifndef TRACKER_RECORDS_API_URL
 #define TRACKER_RECORDS_API_URL "https://www.ibroski.net/api/v1/records"

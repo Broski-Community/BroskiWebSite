@@ -66,6 +66,12 @@ void readAndUpload(std::string token) {
         // GD-dependent read of every locally stored demon completion (Req 1.1).
         std::vector<RawCompletion> raw = readLocalCompletions();
 
+        // Diagnostic: how many raw demon completions were read from the local
+        // save before filtering. A value of 0 here means the reader found nothing
+        // (e.g. no cached demon levels), which would upload "[]" and store nothing.
+        log::info("Demon Tier Tracker: read {} raw local demon completion(s).",
+                  raw.size());
+
         // Drop entries missing fields or out of range; keep the valid set (Req 1.3).
         FilterResult filtered = filterCompletions(raw);
 
@@ -102,10 +108,14 @@ void readAndUpload(std::string token) {
             const web::WebResponse response = request.postSync(kRecordsApiUrl);
             const int status = response.code();
             if (!isSyncSuccessStatus(status)) {               // Req 1.6
+                // Diagnostic: include the server's response body so we can tell
+                // apart a 401 (token), a 400 unknown_level (a demon not in the
+                // allow-list), a 413 (too big), or a 503 (auth timeout).
+                const std::string body = response.string().unwrapOr(std::string{});
                 log::warn(
                     "Demon Tier Tracker: Initial Sync batch {} failed (HTTP {}); "
-                    "will retry next launch.",
-                    i, status);
+                    "response: {}; will retry next launch.",
+                    i, status, body);
                 allSucceeded = false;
                 break;
             }

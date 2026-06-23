@@ -124,9 +124,9 @@ uploads the player's full local demon-completion history (Req 1):
 ### Records_API endpoint URL
 
 The endpoint is a compile-time constant `tracker::kRecordsApiUrl` in
-`src/initial_sync.hpp`, defaulting to the **placeholder** `https://broski.example/api/v1/records`.
-**It must be set to the real deployment URL before shipping**, either by editing the
-default or overriding `TRACKER_RECORDS_API_URL` at configure time:
+`src/initial_sync.hpp`, defaulting to the live deployment
+`https://www.ibroski.net/api/v1/records`. You can still override
+`TRACKER_RECORDS_API_URL` at configure time if you need a different target:
 
 ```bash
 cmake -S tracker-mod -B tracker-mod/build \
